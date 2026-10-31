@@ -150,8 +150,8 @@ E.toast = toast;
 
 /* ================= cabecera y pie ================= */
 function chrome() {
-  /* Halloween: en el inicio unos murciélagos cruzan la pantalla (capas que mueve la tarjeta gráfica, sin tocar la página) */
-  if (HALLOWEEN && !reduce && document.getElementById('hwBand')) document.body.insertAdjacentHTML('beforeend', `<div class="murcielagos" aria-hidden="true">${[0, 1, 2, 3].map(i => `<i style="--i:${i}"><svg viewBox="0 0 64 30"><path d="M32 9L29.5 5 29 10C25 7 14 4 2 9c5 2 7 6 7 11 3-3 7-3 10 0 2-3 6-3 8 1l5 6 5-6c2-4 6-4 8-1 3-3 7-3 10 0 0-5 2-9 7-11-12-5-23-2-27 1L34.5 5Z"/></svg></i>`).join('')}</div>`);
+  /* Halloween: murciélagos que cruzan la pantalla (capas que mueve la tarjeta gráfica, sin tocar la página) */
+  if (HALLOWEEN && !reduce) document.body.insertAdjacentHTML('beforeend', `<div class="murcielagos" aria-hidden="true">${(document.getElementById('hwBand') ? [0, 1, 2, 3] : [1, 3]).map(i => `<i style="--i:${i}"><svg viewBox="0 0 64 30"><path d="M32 9L29.5 5 29 10C25 7 14 4 2 9c5 2 7 6 7 11 3-3 7-3 10 0 2-3 6-3 8 1l5 6 5-6c2-4 6-4 8-1 3-3 7-3 10 0 0-5 2-9 7-11-12-5-23-2-27 1L34.5 5Z"/></svg></i>`).join('')}</div>`);
   /* Cloudflare Pages sirve las páginas sin «.html» (/coleccion): se compara siempre con el nombre del archivo */
   const here = (location.pathname.split('/').pop() || 'index').toLowerCase().replace(/\.html$/, '') + '.html';
   const cur = h => here === h || (h === 'coleccion.html' && here === 'reloj.html') ? ' aria-current="page"' : '';
@@ -374,12 +374,42 @@ function smooth() {
   document.addEventListener('click', e => { const a = e.target.closest('a[href^="#"]'); if (a && a.getAttribute('href').length > 1) { const t = $(a.getAttribute('href')); if (t) { e.preventDefault(); lenis.scrollTo(t, { offset: -90 }) } } });
 }
 
+/* ================= Halloween en todas las páginas =================
+   Gotas que escurren del menú (solo CSS), arañas colgando del menú, un cementerio antes del pie de página
+   con ojos que parpadean y chispas donde se toca la pantalla. Lo que se mueve usa transform u opacidad. */
+const ARANA = `<svg viewBox="0 0 64 56"><g stroke="#2a2a2a" stroke-width="2.6" fill="none" stroke-linecap="round"><path d="M26 30q-12-10-22-4M26 34q-12-2-22 6M27 38q-9 6-14 16M28 26q-8-14-18-16M38 30q12-10 22-4M38 34q12-2 22 6M37 38q9 6 14 16M36 26q8-14 18-16"/></g><ellipse cx="32" cy="36" rx="10" ry="12" fill="#1a1a1a" stroke="rgba(255,140,40,.55)"/><circle cx="32" cy="21" r="7" fill="#1a1a1a" stroke="rgba(255,140,40,.55)"/><circle cx="29" cy="20" r="1.8" fill="#ff7a1a"/><circle cx="35" cy="20" r="1.8" fill="#ff7a1a"/></svg>`;
+const TUMBAS = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 150"><g fill="#050505">
+  <path d="M0 132Q120 122 240 130T480 132V150H0Z"/>
+  <path d="M40 134V98a20 20 0 0 1 40 0V134Z"/><path d="M128 134V90h-11v-9h11V68h9v13h11v9h-11V134Z"/><path d="M175 134V112a13 13 0 0 1 26 0V134Z"/>
+  <path d="M226 112h108v4H226ZM226 124h108v4H226Z"/>${[0, 1, 2, 3, 4, 5, 6, 7].map(i => `<path d="M${230 + i * 14} 134V106l4-7 4 7V134Z"/>`).join('')}
+  <ellipse cx="352" cy="126" rx="14" ry="10"/><path d="M351 116q0-6 4-8l2 2q-3 2-3 6Z"/>
+  <path d="M440 134C442 112 438 96 444 80C448 70 442 60 436 52" stroke="#050505" stroke-width="5" fill="none"/>
+  <path d="M444 84C454 76 462 74 470 64M442 98C432 92 424 92 416 84M445 72C448 62 454 58 458 50" stroke="#050505" stroke-width="2.5" fill="none"/></g>
+  <path fill="#ffa62b" d="M345 124l3-4 3 4ZM353 124l3-4 3 4ZM344 128q8 6 16 0Z"/>
+  <g fill="#2b1406"><text x="60" y="122" font-size="8" text-anchor="middle" font-family="Georgia,serif">RIP</text></g></svg>`;
+function halloweenSitio() {
+  /* arañas que cuelgan del menú y se columpian */
+  $('#head')?.insertAdjacentHTML('beforeend', `<div class="hw-colgantes" aria-hidden="true"><i class="a"><b></b>${ARANA}</i><i class="b"><b></b>${ARANA}</i></div>`);
+  /* cementerio antes del pie de página, con ojos en la oscuridad */
+  $('.site-foot')?.insertAdjacentHTML('beforebegin', `<div class="hw-cementerio" aria-hidden="true" style="--tumbas:url('data:image/svg+xml,${encodeURIComponent(TUMBAS)}')">${[[9, 14], [38, 9], [71, 16], [92, 8]].map(([x, b], i) => `<span class="hw-ojos" style="left:${x}%;bottom:${b}px;--r:${-i * 1.7}s"><i></i><i></i></span>`).join('')}</div>`);
+  /* chispas naranjas y moradas donde se toca o se hace clic */
+  if (reduce) return;
+  /* con «click» salen solo al tocar, no al empezar a deslizar con el dedo */
+  document.addEventListener('click', e => {
+    if (e.target.closest('input,textarea,select') || !e.clientX) return;
+    const c = document.createElement('div');
+    c.className = 'hw-chispas'; c.style.left = e.clientX + 'px'; c.style.top = e.clientY + 'px';
+    c.innerHTML = Array.from({ length: 9 }, (_, i) => `<i style="--a:${i * 40 + Math.round(Math.random() * 25)}deg;--d:${30 + Math.round(Math.random() * 26)}px"></i>`).join('');
+    document.body.appendChild(c); setTimeout(() => c.remove(), 900);
+  }, { passive: true });
+}
+
 /* ================= arranque ================= */
 async function boot() {
   if (window.gsap && window.ScrollTrigger) gsap.registerPlugin(ScrollTrigger);
   const introP = E.introDone = intro();
   await loadData();
-  chrome(); wireWa(); bindGlobal(); renderCart(); pointerFx(); transitions(); smooth();
+  chrome(); if (HALLOWEEN) halloweenSitio(); wireWa(); bindGlobal(); renderCart(); pointerFx(); transitions(); smooth();
   isReady = true; readyFns.forEach(fn => fn(E.data)); readyFns = [];
   wireWa();
   await introP;

@@ -384,3 +384,33 @@ section{position:relative}
 .hw-brasas i{position:absolute;left:var(--x);bottom:-10px;width:5px;height:5px;border-radius:50%;background:#ffb347;box-shadow:0 0 8px 2px rgba(255,120,20,.7);opacity:0;animation:brasa var(--d) linear var(--r) infinite}
 @keyframes brasa{0%{transform:translate(0,0);opacity:0}10%{opacity:1}70%{opacity:.7}100%{transform:translate(30px,-70vh);opacity:0}}
 @media (max-width:900px){.hw-fantasma{left:auto;right:18px;top:300px;width:62px}.hw-arana{left:auto;right:22%}}
+/* gotas naranjas que escurren desde arriba del menú */
+.halloween .site-head::before{content:"";position:absolute;left:0;right:0;top:0;height:16px;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 16'%3E%3Cpath fill='%23f36a10' d='M0 0h160v3c-6 0-6 4-9 4s-3-4-9-4-4 11-8 11-3-11-9-11-5 5-10 5-4-5-10-5-5 8-10 8-4-8-10-8-4 3-8 3-4-3-10-3-4 12-8 12-3-12-10-12-5 6-10 6-4-6-10-6-4 9-8 9-3-9-10-9-5 4-9 4-4-4-10-4Z'/%3E%3C/svg%3E") repeat-x top/160px 16px}
+/* arañas colgando del menú */
+.hw-colgantes{position:absolute;left:0;right:0;top:100%;height:0;pointer-events:none}
+.hw-colgantes i{position:absolute;top:0;width:26px;transform-origin:50% 0;animation:columpio 3.4s ease-in-out infinite alternate}
+.hw-colgantes i.a{right:clamp(110px,16vw,260px)}
+.hw-colgantes i.b{left:38%;width:22px;animation-duration:4.2s;animation-delay:-1.5s}
+.hw-colgantes b{display:block;width:1px;height:44px;margin:0 auto;background:rgba(255,255,255,.45)}
+.hw-colgantes i.b b{height:72px}
+.hw-colgantes svg{display:block;width:100%;margin-top:-4px}
+@keyframes columpio{from{transform:rotate(-9deg)}to{transform:rotate(9deg)}}
+@media (max-width:900px){.hw-colgantes i.b{display:none}.hw-colgantes i.a{right:24px}}
+/* cementerio antes del pie de página */
+.hw-cementerio{position:relative;height:150px;background:var(--tumbas) repeat-x bottom/480px 150px,radial-gradient(40% 120% at 78% 100%,rgba(243,106,16,.32),transparent 70%),linear-gradient(transparent,rgba(243,106,16,.16));overflow:hidden}
+.halloween .hw-cementerio+.site-foot{margin-top:0;border-top:0}
+.hw-ojos{position:absolute;display:flex;gap:5px;animation:parpadeo 4.6s steps(1) infinite;animation-delay:var(--r,0s);transform-origin:50% 50%}
+.hw-ojos i{width:6px;height:4px;border-radius:50%;background:#ffd23f;box-shadow:0 0 6px 2px rgba(255,190,40,.75)}
+@keyframes parpadeo{0%,100%{transform:scaleY(1)}44%{transform:scaleY(.1)}46%{transform:scaleY(1)}86%{transform:scaleY(.1)}88%{transform:scaleY(1)}}
+/* chispas donde se toca */
+.hw-chispas{position:fixed;z-index:300;width:0;height:0;pointer-events:none}
+.hw-chispas i{position:absolute;left:-3px;top:-3px;width:6px;height:6px;border-radius:50%;background:#ff8a1f;box-shadow:0 0 8px 1px #ff8a1f;transform:rotate(var(--a)) translateX(0);animation:chispa .75s cubic-bezier(.2,.7,.3,1) forwards}
+.hw-chispas i:nth-child(3n){background:#b57cff;box-shadow:0 0 8px 1px #b57cff}
+@keyframes chispa{to{transform:rotate(var(--a)) translateX(var(--d)) scale(.2);opacity:0}}
+/* inicio: bruja que cruza frente a la luna y relámpagos */
+.hw-bruja{position:absolute;left:0;top:clamp(20px,6vw,90px);width:clamp(84px,9vw,130px);animation:bruja 15s linear infinite}
+.hw-bruja svg{display:block;width:100%}
+@keyframes bruja{0%{transform:translate(-20vw,40px) rotate(-6deg)}55%{transform:translate(60vw,-10px) rotate(-3deg)}100%{transform:translate(120vw,30px) rotate(-8deg)}}
+.hw-rayo{position:absolute;inset:0;background:rgba(225,232,255,.85);opacity:0;animation:rayo 11s linear infinite}
+@keyframes rayo{0%,84%{opacity:0}85%{opacity:.42}86%{opacity:0}87.5%{opacity:.3}88.5%,100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.hw-rayo,.hw-bruja,.hw-chispas{display:none}}

@@ -373,7 +373,7 @@ function halloween(P) {
   promo.sort((a, b) => (b.destacado ? 1 : 0) - (a.destacado ? 1 : 0));
   const D = halloweenArte();
   /* inicio: luna llena detrás del reloj, telaraña en la esquina y niebla abajo */
-  $('.hero').insertAdjacentHTML('beforeend', `<div class="hw-hero" aria-hidden="true"><div class="hw-luna"><i></i></div>${D.tela('hw-tela-izq')}<div class="hw-niebla"><i></i><i></i></div></div>`);
+  $('.hero').insertAdjacentHTML('beforeend', `<div class="hw-hero" aria-hidden="true"><div class="hw-luna"><i></i></div><div class="hw-bruja">${D.bruja}</div><div class="hw-rayo"></div>${D.tela('hw-tela-izq')}<div class="hw-niebla"><i></i><i></i></div><span class="hw-ojos" style="left:6%;bottom:14%"><i></i><i></i></span><span class="hw-ojos" style="left:16%;bottom:8%;--r:-2.2s"><i></i><i></i></span></div>`);
   band.innerHTML = `<div class="hw-deco" aria-hidden="true">${D.tela('hw-web')}
     <div class="hw-arana"><i></i>${D.arana}</div>
     <div class="hw-fantasma">${D.fantasma}</div>
@@ -423,7 +423,11 @@ function halloweenArte() {
   const arana = `<svg viewBox="0 0 64 56"><g stroke="#2a2a2a" stroke-width="2.6" fill="none" stroke-linecap="round">
     <path d="M26 30q-12-10-22-4M26 34q-12-2-22 6M27 38q-9 6-14 16M28 26q-8-14-18-16M38 30q12-10 22-4M38 34q12-2 22 6M37 38q9 6 14 16M36 26q8-14 18-16"/></g>
     <ellipse cx="32" cy="36" rx="10" ry="12" fill="#1a1a1a" stroke="rgba(255,140,40,.55)"/><circle cx="32" cy="21" r="7" fill="#1a1a1a" stroke="rgba(255,140,40,.55)"/><circle cx="29" cy="20" r="1.8" fill="#ff7a1a"/><circle cx="35" cy="20" r="1.8" fill="#ff7a1a"/></svg>`;
-  return { tela, calabaza, fantasma, arana };
+  const bruja = `<svg viewBox="0 0 140 70"><g fill="#0a0a0a" stroke="rgba(255,140,40,.6)" stroke-width="1">
+    <path d="M4 46l20-5 1 7-20 5z"/><path d="M22 44L134 33l1 4L23 49z"/>
+    <path d="M56 42c2-12 10-20 20-19l8 18zM56 42l-18-9 8 10zM70 41l-6 14 4 1 7-14z"/>
+    <circle cx="78" cy="20" r="6"/><path d="M68 16h22l-9-4-6-12-2 13z"/></g></svg>`;
+  return { tela, calabaza, fantasma, arana, bruja };
 }
 
 /* ---- reloj del hero: hora real de Barranquilla, bisel que gira con el scroll ---- */
