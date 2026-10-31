@@ -371,10 +371,14 @@ function halloween(P) {
   const {$, fmt} = Elite, band = $('#hwBand'), promo = P.filter(p => p.promo && p.disponible !== false);
   if (!promo.length) return;
   promo.sort((a, b) => (b.destacado ? 1 : 0) - (a.destacado ? 1 : 0));
-  band.innerHTML = `<svg class="hw-web" viewBox="0 0 200 200" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1">
-    ${[0, 15, 30, 45, 60, 75, 90].map(a => `<line x1="200" y1="0" x2="${200 - 200 * Math.sin(a * Math.PI / 180)}" y2="${200 * Math.cos(a * Math.PI / 180)}"/>`).join('')}
-    ${[40, 75, 110, 145, 180].map(r => `<path d="${[0, 15, 30, 45, 60, 75, 90].map((a, i) => `${i ? 'Q' + (200 - r * 0.86 * Math.sin((a - 7.5) * Math.PI / 180)) + ' ' + (r * 0.86 * Math.cos((a - 7.5) * Math.PI / 180)) + ' ' : 'M'}${200 - r * Math.sin(a * Math.PI / 180)} ${r * Math.cos(a * Math.PI / 180)}`).join(' ')}"/>`).join('')}
-  </g></svg>
+  const D = halloweenArte();
+  /* inicio: luna llena detrás del reloj, telaraña en la esquina y niebla abajo */
+  $('.hero').insertAdjacentHTML('beforeend', `<div class="hw-hero" aria-hidden="true"><div class="hw-luna"><i></i></div>${D.tela('hw-tela-izq')}<div class="hw-niebla"><i></i><i></i></div></div>`);
+  band.innerHTML = `<div class="hw-deco" aria-hidden="true">${D.tela('hw-web')}
+    <div class="hw-arana"><i></i>${D.arana}</div>
+    <div class="hw-fantasma">${D.fantasma}</div>
+    <div class="hw-brasas">${Array.from({ length: 14 }, (_, i) => `<i style="--x:${(i * 37) % 100}%;--d:${6 + (i * 7) % 6}s;--r:${-(i * 1.3).toFixed(1)}s"></i>`).join('')}</div>
+  </div>
   <div class="wrap hw-in">
     <div class="hw-txt">
       <span class="eyebrow" data-reveal>🎃 Solo hoy · 31 de octubre</span>
@@ -382,6 +386,7 @@ function halloween(P) {
       <p class="lead" data-reveal=".1">Línea <b>Pro Diver</b> de Invicta con envío gratis a toda Colombia.</p>
       <div class="hw-precio" data-reveal=".15"><span>Antes <s>${fmt(Elite.PROMO.antes)}</s></span><b>Hoy ${fmt(Elite.PROMO.hoy)}</b><em>Envío gratis</em></div>
       <div class="hw-cta" data-reveal=".2"><a class="btn" href="coleccion.html#pro-diver">Ver los Pro Diver</a><span class="hw-fin">Termina en <b id="hwT">--:--:--</b></span></div>
+      <div class="hw-calabazas" aria-hidden="true">${D.calabaza('grande')}${D.calabaza('chica')}${D.calabaza('chica')}</div>
     </div>
     <div class="grid hw-grid" data-stagger>${promo.slice(0, 4).map(Elite.card).join('')}</div>
   </div>`;
@@ -393,6 +398,32 @@ function halloween(P) {
     if (!s) { band.hidden = true; clearInterval(id) }
   };
   const id = setInterval(tick, 1000); tick();
+}
+
+/* Dibujos de Halloween en SVG: pesan casi nada y se ven nítidos en cualquier pantalla. Lo que se mueve
+   (cara de la calabaza, fantasma, araña, brasas) se anima con transform u opacidad sobre cajas HTML, que el
+   navegador mueve aparte sin volver a dibujar la página. */
+function halloweenArte() {
+  const rad = a => a * Math.PI / 180;
+  const tela = cls => `<svg class="${cls}" viewBox="0 0 200 200"><g fill="none" stroke="currentColor" stroke-width="1">
+    ${[0, 15, 30, 45, 60, 75, 90].map(a => `<line x1="200" y1="0" x2="${200 - 200 * Math.sin(rad(a))}" y2="${200 * Math.cos(rad(a))}"/>`).join('')}
+    ${[40, 75, 110, 145, 180].map(r => `<path d="${[0, 15, 30, 45, 60, 75, 90].map((a, i) => `${i ? 'Q' + (200 - r * 0.86 * Math.sin(rad(a - 7.5))) + ' ' + (r * 0.86 * Math.cos(rad(a - 7.5))) + ' ' : 'M'}${200 - r * Math.sin(rad(a))} ${r * Math.cos(rad(a))}`).join(' ')}"/>`).join('')}
+  </g></svg>`;
+  const cara = `<path d="M34 52l11-15 11 15zM64 52l11-15 11 15zM56 60l4-7 4 7zM28 69c10 16 54 16 64 0l-7 3-4-6-7 7-6-7-6 7-6-7-7 7-4-6z"/>`;
+  const calabaza = tam => `<div class="hw-calabaza ${tam}"><i class="hw-brillo"></i>
+    <svg viewBox="0 0 120 106"><defs><radialGradient id="hwCal" cx="42%" cy="38%" r="70%"><stop offset="0" stop-color="#ffab45"/><stop offset=".55" stop-color="#f26a0f"/><stop offset="1" stop-color="#9c3a08"/></radialGradient></defs>
+      <path d="M57 22c-1-9 2-15 8-19l5 3c-5 4-6 9-5 16z" fill="#56692a"/>
+      <ellipse cx="36" cy="64" rx="30" ry="38" fill="url(#hwCal)"/><ellipse cx="84" cy="64" rx="30" ry="38" fill="url(#hwCal)"/><ellipse cx="60" cy="64" rx="31" ry="41" fill="url(#hwCal)"/>
+      <path d="M45 28c-9 11-11 47 0 74M75 28c9 11 11 47 0 74" stroke="#a9440b" stroke-width="2" fill="none" opacity=".55"/>
+      <g fill="#3a1503">${cara}</g></svg>
+    <svg class="hw-luz" viewBox="0 0 120 106"><defs><radialGradient id="hwLuz" cx="50%" cy="55%" r="60%"><stop offset="0" stop-color="#fff6c2"/><stop offset=".5" stop-color="#ffcf4a"/><stop offset="1" stop-color="#ff8c00"/></radialGradient></defs><g fill="url(#hwLuz)">${cara}</g></svg></div>`;
+  const fantasma = `<svg viewBox="0 0 100 124"><path d="M50 6C25 6 13 27 13 52v56q6 10 12 0t12 0 12 0 12 0 12 0 12 0V52C87 27 75 6 50 6z" fill="#f4f1ea"/>
+    <ellipse cx="38" cy="50" rx="6" ry="9" fill="#151515"/><ellipse cx="62" cy="50" rx="6" ry="9" fill="#151515"/><ellipse cx="50" cy="73" rx="7" ry="9" fill="#151515"/>
+    <circle cx="28" cy="64" r="5" fill="#ffb4a2" opacity=".55"/><circle cx="72" cy="64" r="5" fill="#ffb4a2" opacity=".55"/></svg>`;
+  const arana = `<svg viewBox="0 0 64 56"><g stroke="#2a2a2a" stroke-width="2.6" fill="none" stroke-linecap="round">
+    <path d="M26 30q-12-10-22-4M26 34q-12-2-22 6M27 38q-9 6-14 16M28 26q-8-14-18-16M38 30q12-10 22-4M38 34q12-2 22 6M37 38q9 6 14 16M36 26q8-14 18-16"/></g>
+    <ellipse cx="32" cy="36" rx="10" ry="12" fill="#1a1a1a" stroke="rgba(255,140,40,.55)"/><circle cx="32" cy="21" r="7" fill="#1a1a1a" stroke="rgba(255,140,40,.55)"/><circle cx="29" cy="20" r="1.8" fill="#ff7a1a"/><circle cx="35" cy="20" r="1.8" fill="#ff7a1a"/></svg>`;
+  return { tela, calabaza, fantasma, arana };
 }
 
 /* ---- reloj del hero: hora real de Barranquilla, bisel que gira con el scroll ---- */

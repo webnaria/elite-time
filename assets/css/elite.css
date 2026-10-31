@@ -351,3 +351,36 @@ section{position:relative}
 .hw-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 @media (max-width:900px){.hw-in{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){.murcielagos{display:none}}
+/* ilustraciones: luna, telarañas y niebla en el inicio; calabazas, fantasma, araña y brasas en la franja */
+.hw-hero{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.hw-luna{position:absolute;right:-6%;top:-4%;width:clamp(220px,34vw,520px);aspect-ratio:1;border-radius:50%;opacity:.9;
+  background:radial-gradient(circle at 30% 70%,rgba(160,110,40,.35) 0 9%,transparent 10%),radial-gradient(circle at 62% 38%,rgba(160,110,40,.3) 0 6%,transparent 7%),radial-gradient(circle at 70% 72%,rgba(160,110,40,.25) 0 4%,transparent 5%),radial-gradient(circle at 38% 34%,#fff8e4,#ffe0a0 45%,#f2ad52 80%,#d9862e);
+  box-shadow:0 0 60px 10px rgba(255,170,60,.35),0 0 160px 40px rgba(243,106,16,.18)}
+.hw-luna i{position:absolute;inset:-30%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,170,60,.22),transparent);animation:latido 4s ease-in-out infinite alternate}
+@keyframes latido{from{opacity:.45}to{opacity:1}}
+.hw-tela-izq{position:absolute;left:0;top:0;width:clamp(130px,16vw,220px);color:rgba(255,255,255,.16);transform:scaleX(-1)}
+.hw-niebla i{position:absolute;left:-30%;bottom:-18%;width:160%;height:48%;border-radius:50%;background:radial-gradient(50% 50% at 50% 50%,rgba(230,225,235,.13),transparent 70%);animation:niebla 34s ease-in-out infinite alternate}
+.hw-niebla i+i{bottom:-24%;left:-50%;animation-duration:46s;animation-direction:alternate-reverse;opacity:.8}
+@keyframes niebla{to{transform:translateX(22%)}}
+.hw-deco{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.hw-calabazas{display:flex;align-items:flex-end;gap:8px;margin-top:clamp(22px,3vw,34px)}
+.hw-calabaza{position:relative;width:clamp(84px,8vw,120px)}
+.hw-calabaza.chica{width:clamp(52px,5vw,76px)}
+.hw-calabaza.chica+.chica .hw-luz{animation-delay:-2.1s}
+.hw-calabaza.chica+.chica .hw-brillo{animation-delay:-1.4s}
+.hw-calabaza svg{display:block;width:100%;position:relative}
+.hw-calabaza .hw-luz{position:absolute;inset:0;animation:titila 2.8s steps(1) infinite}
+.hw-calabaza.chica .hw-luz{animation-duration:3.4s;animation-delay:-1.2s}
+.hw-brillo{position:absolute;left:-40%;right:-40%;top:-30%;bottom:-20%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,150,30,.45),transparent);animation:resplandor 2.8s ease-in-out infinite alternate}
+@keyframes titila{0%,100%{opacity:1}12%{opacity:.55}14%{opacity:1}46%{opacity:.8}48%{opacity:.4}50%{opacity:1}78%{opacity:.7}}
+@keyframes resplandor{from{opacity:.55}to{opacity:1}}
+.hw-fantasma{position:absolute;left:clamp(280px,32vw,520px);top:clamp(70px,9vw,130px);width:clamp(60px,6vw,92px);opacity:.92;animation:flota 5.5s ease-in-out infinite alternate}
+.hw-fantasma svg{display:block;width:100%}
+@keyframes flota{from{transform:translate(0,0) rotate(-4deg)}to{transform:translate(-18px,-26px) rotate(5deg)}}
+.hw-arana{position:absolute;left:clamp(20px,46%,620px);top:0;width:34px;animation:baja 7s ease-in-out infinite alternate}
+.hw-arana i{position:absolute;left:50%;bottom:calc(100% - 14px);width:1px;height:260px;background:rgba(255,255,255,.35)}
+.hw-arana svg{display:block;width:100%}
+@keyframes baja{from{transform:translateY(-30px)}to{transform:translateY(130px)}}
+.hw-brasas i{position:absolute;left:var(--x);bottom:-10px;width:5px;height:5px;border-radius:50%;background:#ffb347;box-shadow:0 0 8px 2px rgba(255,120,20,.7);opacity:0;animation:brasa var(--d) linear var(--r) infinite}
+@keyframes brasa{0%{transform:translate(0,0);opacity:0}10%{opacity:1}70%{opacity:.7}100%{transform:translate(30px,-70vh);opacity:0}}
+@media (max-width:900px){.hw-fantasma{left:auto;right:18px;top:300px;width:62px}.hw-arana{left:auto;right:22%}}
