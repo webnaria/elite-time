@@ -10,6 +10,13 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d } catch (e) { return d } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true } catch (e) { return false } }
 };
+/* Halloween (pedido del cliente, solo el 31 de octubre en Barranquilla): tema naranja, murciélagos y la
+   promoción de la línea Pro Diver de $580.000 a $515.000 con envío gratis. Se apaga sola a la medianoche;
+   con ?halloween=1 en la dirección se puede ver otro día para probar. */
+const hoyBq = new Date(Date.now() - 5 * 3600e3);
+const HALLOWEEN = /[?&]halloween=1/.test(location.search) || (hoyBq.getUTCFullYear() === 2026 && hoyBq.getUTCMonth() === 9 && hoyBq.getUTCDate() === 31);
+const PROMO = { antes: 580000, hoy: 515000, fin: Date.UTC(hoyBq.getUTCFullYear(), hoyBq.getUTCMonth(), hoyBq.getUTCDate() + 1, 5) };
+if (HALLOWEEN) document.documentElement.classList.add('halloween');
 
 const DEFAULT_SETTINGS = { wa: '573105300899', pin: '2026', sub: '', show: { perfumes: true, pedir: true, garantia: true, destacados: true } };
 const DEFAULT_CLIENTES = [
@@ -62,7 +69,11 @@ async function loadData() {
     E.data = { productos: base, clientes: structuredClone(DEFAULT_CLIENTES), settings: structuredClone(DEFAULT_SETTINGS) };
   }
   E.DEFAULT_SETTINGS = DEFAULT_SETTINGS; E.DEFAULT_CLIENTES = DEFAULT_CLIENTES;
+  if (HALLOWEEN) E.data.productos.forEach(p => {
+    if (/pro\s*diver/i.test(p.modelo || '') && Number(p.precio) === PROMO.antes) { p.antes = p.precio; p.precio = PROMO.hoy; p.promo = true }
+  });
 }
+E.HALLOWEEN = HALLOWEEN; E.PROMO = PROMO;
 E.byId = id => E.data.productos.find(p => p.id === id);
 E.brands = () => { const s = new Set(Object.keys(BRANDS)); E.data.productos.forEach(p => s.add(p.marca)); return [...s] };
 E.specs = p => p.specs && p.specs.length ? p.specs : ['Movimiento de cuarzo', 'Acero inoxidable', 'Resistente al agua'];
@@ -77,10 +88,10 @@ E.img = (src, alt, sizes, attrs = '') => { const ss = E.srcset(src); return `<im
 E.phoneHTML = (cls = '') => `<a class="wa-num ${cls}" href="${E.wa('Hola Élite Time, vi su página web y quiero información sobre sus relojes.')}" target="_blank" rel="noopener">${ICON.wa}<span>${E.phone()}</span></a>`;
 
 E.card = (p, i = 0) => `<a class="pcard${p.disponible === false ? ' sold' : ''}" href="${E.url(p)}" data-cursor="Ver" data-id="${esc(p.id)}">
-  ${p.disponible === false ? '<span class="tag">Agotado</span>' : p.destacado ? '<span class="tag gold">Destacado</span>' : ''}
+  ${p.disponible === false ? '<span class="tag">Agotado</span>' : p.promo ? '<span class="tag hw">Halloween</span>' : p.destacado ? '<span class="tag gold">Destacado</span>' : ''}
   <div class="cush">${E.img(p.imagen, p.marca + ' ' + p.modelo, '(max-width:560px) 46vw, (max-width:1100px) 30vw, 300px', `loading="${i < 4 ? 'eager' : 'lazy'}"`)}</div>
   <div class="info"><span class="brand">${esc(p.marca)} · ${esc(p.genero)}</span><h3>${esc(p.modelo)}</h3>
-  <div class="row"><span class="price">${fmt(p.precio)}</span>${p.disponible === false ? '' : `<button class="add" data-add="${esc(p.id)}" aria-label="Agregar ${esc(p.modelo)} al carrito">${ICON.plus}</button>`}</div></div></a>`;
+  <div class="row"><span class="price">${p.antes ? `<s class="was">${fmt(p.antes)}</s>` : ''}${fmt(p.precio)}</span>${p.disponible === false ? '' : `<button class="add" data-add="${esc(p.id)}" aria-label="Agregar ${esc(p.modelo)} al carrito">${ICON.plus}</button>`}</div></div></a>`;
 
 /* ================= carrito ================= */
 const cart = { items: store.get(CART, []) };
@@ -118,15 +129,16 @@ function renderCart() {
   }
   $('#cartFoot').hidden = false;
   box.innerHTML = cart.items.map((it, i) => { const p = E.byId(it.id); if (!p) return ''; return `<div class="citem">
-    ${E.img(p.imagen, '', '76px')}<div><h4>${esc(p.marca)} ${esc(p.modelo)}</h4><small>${it.caja ? '+ Caja ' + esc(it.caja) + ' (adicional) · ' : 'Caja original · '}${fmt(p.precio)}</small>
+    ${E.img(p.imagen, '', '76px')}<div><h4>${esc(p.marca)} ${esc(p.modelo)}</h4><small>${it.caja ? '+ Caja ' + esc(it.caja) + ' (adicional) · ' : 'Caja original · '}${fmt(p.precio)}${p.promo ? ' · promo Halloween' : ''}</small>
     <div class="qty"><button data-q="-1" data-i="${i}" aria-label="Quitar uno">−</button><span>${it.qty}</span><button data-q="1" data-i="${i}" aria-label="Agregar uno">+</button></div></div>
     <button class="rm" data-rm="${i}">Quitar</button></div>` }).join('');
   $('#cartTotal').textContent = fmt(cart.total());
 }
 function checkout() {
   const name = $('#cName').value.trim(), city = $('#cCity').value.trim(), pay = $('#cPay').value;
-  const lines = cart.items.map(it => { const p = E.byId(it.id); return `• ${it.qty} × ${p.marca} ${p.modelo}${it.caja ? ' + caja ' + it.caja + ' (costo adicional por confirmar)' : ''} — ${fmt(p.precio * it.qty)}` });
-  const msg = `Hola Élite Time, quiero hacer este pedido:\n\n${lines.join('\n')}\n\nTotal: ${fmt(cart.total())}\n${name ? 'Nombre: ' + name + '\n' : ''}${city ? 'Ciudad: ' + city + '\n' : ''}Pago: ${pay}\n\n¿Me confirman disponibilidad y envío?`;
+  const lines = cart.items.map(it => { const p = E.byId(it.id); return `• ${it.qty} × ${p.marca} ${p.modelo}${it.caja ? ' + caja ' + it.caja + ' (costo adicional por confirmar)' : ''} — ${fmt(p.precio * it.qty)}${p.promo ? ' (promo Halloween, antes ' + fmt(p.antes * it.qty) + ')' : ''}` });
+  const promo = cart.items.some(it => E.byId(it.id)?.promo);
+  const msg = `Hola Élite Time, quiero hacer este pedido:\n\n${lines.join('\n')}\n\nTotal: ${fmt(cart.total())}\n${promo ? 'Envío gratis por la promoción de Halloween\n' : ''}${name ? 'Nombre: ' + name + '\n' : ''}${city ? 'Ciudad: ' + city + '\n' : ''}Pago: ${pay}\n\n¿Me confirman disponibilidad y envío?`;
   $('#cGo').href = E.wa(msg);
 }
 E.openCart = () => { $('#drawer').classList.add('on'); $('#scrim').classList.add('on'); checkout(); lenis?.stop() };
@@ -138,10 +150,12 @@ E.toast = toast;
 
 /* ================= cabecera y pie ================= */
 function chrome() {
+  /* Halloween: en el inicio unos murciélagos cruzan la pantalla (capas que mueve la tarjeta gráfica, sin tocar la página) */
+  if (HALLOWEEN && !reduce && document.getElementById('hwBand')) document.body.insertAdjacentHTML('beforeend', `<div class="murcielagos" aria-hidden="true">${[0, 1, 2, 3].map(i => `<i style="--i:${i}"><svg viewBox="0 0 64 30"><path d="M32 9L29.5 5 29 10C25 7 14 4 2 9c5 2 7 6 7 11 3-3 7-3 10 0 2-3 6-3 8 1l5 6 5-6c2-4 6-4 8-1 3-3 7-3 10 0 0-5 2-9 7-11-12-5-23-2-27 1L34.5 5Z"/></svg></i>`).join('')}</div>`);
   /* Cloudflare Pages sirve las páginas sin «.html» (/coleccion): se compara siempre con el nombre del archivo */
   const here = (location.pathname.split('/').pop() || 'index').toLowerCase().replace(/\.html$/, '') + '.html';
   const cur = h => here === h || (h === 'coleccion.html' && here === 'reloj.html') ? ' aria-current="page"' : '';
-  const ann = ['Relojería 100% original', 'Garantía de 1 año en maquinaria y batería', 'Envíos a toda Colombia', 'Pago contra entrega en Barranquilla y Soledad', `${ICON.wa} Pedidos por WhatsApp · ${E.phone()}`];
+  const ann = [...(HALLOWEEN ? ['🎃 Promoción de Halloween · solo hoy', 'Línea Pro Diver: antes $580.000, hoy $515.000', 'Envío gratis en la promoción'] : []), 'Relojería 100% original', 'Garantía de 1 año en maquinaria y batería', 'Envíos a toda Colombia', 'Pago contra entrega en Barranquilla y Soledad', `${ICON.wa} Pedidos por WhatsApp · ${E.phone()}`];
   document.body.insertAdjacentHTML('afterbegin', `
   <a href="#main" class="btn sm" style="position:fixed;left:-999px;top:8px;z-index:999" onfocus="this.style.left='8px'" onblur="this.style.left='-999px'">Saltar al contenido</a>
   <div class="announce" aria-label="Anuncios"><div class="track">${(ann.map(a => `<span>${a}</span>`).join('')).repeat(2)}</div></div>

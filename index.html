@@ -208,6 +208,8 @@
     <div class="scroll-cue" aria-hidden="true"><i></i>SCROLL</div>
   </section>
 
+  <section class="hw-band" id="hwBand" hidden></section>
+
   <div class="marquee" aria-hidden="true"><div class="track" id="mq1"></div></div>
 
   <section class="hscroll bg-waves" id="hs">
@@ -339,7 +341,7 @@ Elite.ready(d => {
 
   /* destacados */
   let F = P.filter(p => p.destacado && p.disponible !== false); if (F.length < 4) F = F.concat(P.filter(p => !F.includes(p)).slice(0, 6 - F.length));
-  $('#hsTrack').innerHTML = F.map((p, i) => `<a class="feat" href="${Elite.url(p)}" data-cursor="Ver"><span class="tag gold">${esc(p.marca)}</span><span class="num">${String(i + 1).padStart(2, '0')}</span><div class="img">${Elite.img(p.imagen, p.marca + ' ' + p.modelo, '(max-width:900px) 70vw, 380px', 'loading="lazy"')}</div><span class="eyebrow" style="color:var(--mute)">${esc(p.genero)}</span><h3>${esc(p.modelo)}</h3><div class="ft"><span class="mono">${fmt(p.precio)}</span><button class="icon-btn" data-add="${esc(p.id)}" aria-label="Agregar al carrito" style="width:40px;height:40px">${Elite.ICON.plus}</button></div></a>`).join('')
+  $('#hsTrack').innerHTML = F.map((p, i) => `<a class="feat" href="${Elite.url(p)}" data-cursor="Ver"><span class="tag gold">${esc(p.marca)}</span><span class="num">${String(i + 1).padStart(2, '0')}</span><div class="img">${Elite.img(p.imagen, p.marca + ' ' + p.modelo, '(max-width:900px) 70vw, 380px', 'loading="lazy"')}</div><span class="eyebrow" style="color:var(--mute)">${esc(p.genero)}</span><h3>${esc(p.modelo)}</h3><div class="ft"><span class="mono">${p.antes ? `<s class="was">${fmt(p.antes)}</s>` : ''}${fmt(p.precio)}</span><button class="icon-btn" data-add="${esc(p.id)}" aria-label="Agregar al carrito" style="width:40px;height:40px">${Elite.ICON.plus}</button></div></a>`).join('')
     + `<a class="feat end" href="coleccion.html"><h3 style="font-size:2.2rem">Ver los ${P.length} relojes</h3><span class="btn" style="--bg:#0a0a0a;--fg:var(--bone)">Colección completa</span></a>`;
 
   /* marcas */
@@ -361,7 +363,37 @@ Elite.ready(d => {
   }
 
   buildDial();
+  if (Elite.HALLOWEEN) halloween(P);
 });
+
+/* ---- Halloween: franja con la promoción de la línea Pro Diver y la cuenta regresiva hasta la medianoche ---- */
+function halloween(P) {
+  const {$, fmt} = Elite, band = $('#hwBand'), promo = P.filter(p => p.promo && p.disponible !== false);
+  if (!promo.length) return;
+  promo.sort((a, b) => (b.destacado ? 1 : 0) - (a.destacado ? 1 : 0));
+  band.innerHTML = `<svg class="hw-web" viewBox="0 0 200 200" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1">
+    ${[0, 15, 30, 45, 60, 75, 90].map(a => `<line x1="200" y1="0" x2="${200 - 200 * Math.sin(a * Math.PI / 180)}" y2="${200 * Math.cos(a * Math.PI / 180)}"/>`).join('')}
+    ${[40, 75, 110, 145, 180].map(r => `<path d="${[0, 15, 30, 45, 60, 75, 90].map((a, i) => `${i ? 'Q' + (200 - r * 0.86 * Math.sin((a - 7.5) * Math.PI / 180)) + ' ' + (r * 0.86 * Math.cos((a - 7.5) * Math.PI / 180)) + ' ' : 'M'}${200 - r * Math.sin(a * Math.PI / 180)} ${r * Math.cos(a * Math.PI / 180)}`).join(' ')}"/>`).join('')}
+  </g></svg>
+  <div class="wrap hw-in">
+    <div class="hw-txt">
+      <span class="eyebrow" data-reveal>🎃 Solo hoy · 31 de octubre</span>
+      <h2 class="h-lg" data-split>Promoción de <em>Halloween</em></h2>
+      <p class="lead" data-reveal=".1">Línea <b>Pro Diver</b> de Invicta con envío gratis a toda Colombia.</p>
+      <div class="hw-precio" data-reveal=".15"><span>Antes <s>${fmt(Elite.PROMO.antes)}</s></span><b>Hoy ${fmt(Elite.PROMO.hoy)}</b><em>Envío gratis</em></div>
+      <div class="hw-cta" data-reveal=".2"><a class="btn" href="coleccion.html#pro-diver">Ver los Pro Diver</a><span class="hw-fin">Termina en <b id="hwT">--:--:--</b></span></div>
+    </div>
+    <div class="grid hw-grid" data-stagger>${promo.slice(0, 4).map(Elite.card).join('')}</div>
+  </div>`;
+  band.hidden = false;
+  const t = $('#hwT'), pad = n => String(n).padStart(2, '0');
+  const tick = () => {
+    const s = Math.max(0, Math.floor((Elite.PROMO.fin - Date.now()) / 1000));
+    t.textContent = `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`;
+    if (!s) { band.hidden = true; clearInterval(id) }
+  };
+  const id = setInterval(tick, 1000); tick();
+}
 
 /* ---- reloj del hero: hora real de Barranquilla, bisel que gira con el scroll ---- */
 function buildDial() {

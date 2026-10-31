@@ -121,25 +121,58 @@ Elite.ready(d => {
   let impact = false, qty = 1;
   /* fotos: primero la principal (sin fondo) y luego las que se agregan en el panel */
   const pics = [p.imagen, ...(p.fotos || [])].filter(Boolean);
-  /* especificaciones: «Nombre : valor» es un dato; una línea sola seguida de datos es un título de sección */
+  /* especificaciones: todas las fichas se muestran igual, por secciones y con «Nombre : valor», aunque en el
+     panel se hayan pegado en otro formato: nombre y valor en líneas separadas, sin secciones, con viñetas,
+     en mayúsculas o solo tres frases sueltas */
   const specsHTML = L => {
     const kv = l => l.match(/^(.+?)\s*:\s*(.*)$/);
-    if (!L.some(kv)) return `<ul class="list" style="margin-bottom:18px">${L.map(s => `<li>${esc(s)}</li>`).join('')}</ul>`;
-    return '<div class="sp">' + L.map((l, i) => { const m = kv(l);
-      if (m) { const v = m[2].trim(); return !v || v.startsWith(':') ? '' : `<div><b>${esc(m[1])} :</b> ${esc(v)}</div>` }
-      return L[i + 1] && kv(L[i + 1]) ? `<h4>${esc(l)}</h4>` : `<div>${esc(l)}</div>` }).join('') + '</div>';
+    const SEC = /^(especificaciones( generales| técnicas)?|características( principales)?|caja( y esfera)?|esfera|dial|tablero|movimiento|mecanismo|correa|banda|pulsera|brazalete)$/i;
+    const titulo = t => t === t.toUpperCase() ? t.toLowerCase().split(' ').map((w, i) => i && /^(y|de|del|la|el|en)$/.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : t;
+    const limpio = t => String(t).replace(/^[\s*•·◆\-–]+/, '').replace(/\bMeterial\b/g, 'Material').replace(/\bdel la\b/g, 'de la').replace(/Corre-a/g, 'Correa').trim();
+    const SUELTAS = { 'movimiento de cuarzo': ['Tipo de Movimiento', 'Cuarzo'], 'acero inoxidable': ['Material de la Caja', 'Acero inoxidable'], 'resistente al agua': ['Resistencia al Agua', 'Sí'] };
+    let lineas = L.map(limpio).filter(Boolean);
+    const secciones = []; let actual = null;
+    const seccion = t => { actual = { t: titulo(t.replace(/:$/, '')), filas: [] }; secciones.push(actual) };
+    const fila = (k, v) => { v = String(v).trim(); if (!v || v.startsWith(':')) return; if (!actual) seccion(''); actual.filas.push([k.trim(), v]) };
+    if (!lineas.some(l => kv(l))) {
+      // nombre y valor en líneas separadas (o frases sueltas)
+      for (let i = 0; i < lineas.length; i++) {
+        const l = lineas[i], suelta = SUELTAS[l.toLowerCase()];
+        if (suelta) fila(...suelta);
+        else if (SEC.test(l)) seccion(l);
+        else if (i + 1 < lineas.length) fila(l, lineas[++i]);
+      }
+    } else {
+      lineas.forEach((l, i) => {
+        const m = kv(l), sigue = lineas[i + 1] && kv(lineas[i + 1]);
+        if (m && m[2].trim() === '') { if (SEC.test(m[1])) seccion(m[1]) }
+        else if (m) fila(m[1], m[2]);
+        else if (SEC.test(l) || sigue) seccion(l);
+        else fila('', l);
+      });
+    }
+    // sin títulos (o con uno solo genérico): se agrupan como en las fichas completas
+    const llenas = secciones.filter(s => s.filas.length);
+    if (llenas.length === 1 && (!llenas[0].t || /^(especificaciones|características)/i.test(llenas[0].t))) {
+      const grupo = k => /correa|pulsera|banda|hebilla|cierre|brazalete/i.test(k) ? 'Correa' : /movimiento|calibre|joyas|mecanismo/i.test(k) ? 'Movimiento' : /caja|esfera|dial|tablero|bisel|cristal|corona|diámetro|grosor|luminos|agujas|marcación/i.test(k) ? 'Caja' : 'Especificaciones Generales';
+      const orden = ['Especificaciones Generales', 'Caja', 'Movimiento', 'Correa'], g = {};
+      llenas[0].filas.forEach(f => (g[grupo(f[0])] ||= []).push(f));
+      secciones.splice(0, secciones.length, ...orden.filter(t => g[t]).map(t => ({ t, filas: g[t] })));
+    }
+    const html = secciones.filter(s => s.filas.length).map(s => (s.t ? `<h4>${esc(s.t)}</h4>` : '') + s.filas.map(([k, v]) => `<div>${k ? `<b>${esc(k)} :</b> ` : ''}${esc(v)}</div>`).join('')).join('');
+    return html ? `<div class="sp">${html}</div>` : `<ul class="list" style="margin-bottom:18px">${L.map(s => `<li>${esc(s)}</li>`).join('')}</ul>`;
   };
   $('#crumbs').insertAdjacentHTML('beforeend', `<span><a href="coleccion.html#${BRANDS[p.marca]?.slug || ''}">${esc(p.marca)}</a></span><span>${esc(p.modelo)}</span>`);
   $('#pd').innerHTML = `
   <div class="pd-media"><div class="pd-stage" id="stage" data-fly>
     <div class="ring"></div><div class="bgname" aria-hidden="true">${esc(p.marca.toUpperCase())}</div>
-    ${sold ? '<span class="tag">Agotado</span>' : p.destacado ? '<span class="tag gold">Destacado</span>' : ''}
+    ${sold ? '<span class="tag">Agotado</span>' : p.promo ? '<span class="tag hw">Halloween</span>' : p.destacado ? '<span class="tag gold">Destacado</span>' : ''}
     ${Elite.img(p.imagen, p.marca + ' ' + p.modelo, '(max-width:900px) 82vw, 560px', 'id="pimg" fetchpriority="high"')}
   </div>${pics.length > 1 ? `<div class="thumbs" id="thumbs" role="list">${pics.map((f, i) => `<button type="button" data-i="${i}" aria-current="${!i}" aria-label="Foto ${i + 1}">${Elite.img(f, '', '76px', 'loading="lazy"')}</button>`).join('')}</div>` : ''}</div>
   <div class="pd-info">
     <span class="eyebrow" data-reveal>${esc(p.marca)} · ${esc(p.genero)}</span>
     <h1 data-split>${esc(p.modelo)}</h1>
-    <div class="price-row" data-reveal=".15"><span class="p">${fmt(p.precio)}</span><span class="badge ${sold ? 'no' : 'ok'}">${sold ? 'Agotado' : 'Disponible'}</span></div>
+    <div class="price-row" data-reveal=".15"><span class="p">${p.antes ? `<s class="was">${fmt(p.antes)}</s>` : ''}${fmt(p.precio)}</span><span class="badge ${sold ? 'no' : 'ok'}">${sold ? 'Agotado' : 'Disponible'}</span>${p.promo ? '<span class="badge hw">Halloween · envío gratis</span>' : ''}</div>
     <div class="specs" data-reveal=".2"><div><small>Línea</small><b>${esc(line)}</b></div><div><small>Referencia</small><b class="mono">${esc(ref)}</b></div><div><small>Para</small><b>${esc(p.genero)}</b></div></div>
     <div class="opt" data-reveal=".25"><h3><span>Presentación</span></h3>
       <div class="incl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><div><b>Caja original incluida</b><span>Entregado en nuestra tula reutilizable Élite Time.</span></div></div>
@@ -162,7 +195,7 @@ Elite.ready(d => {
       <details><summary>Envío y pago</summary><p>Envíos a todo el país. Entrega inmediata en Barranquilla. Pago contra entrega en Barranquilla y Soledad, o por transferencia.</p></details>
     </div>
   </div>`;
-  const msg = () => (sold ? `Hola Élite Time, ¿cuándo vuelve a estar disponible el ${p.marca} ${p.modelo}?` : `Hola Élite Time, quiero comprar ${qty} × ${p.marca} ${p.modelo}${p.precio ? ' (' + fmt(p.precio) + ')' : ''} ${impact ? ' y quiero agregar la caja de impacto (costo adicional)' : ''}. ¿Está disponible?`).replace(/\s{2,}/g, ' ');
+  const msg = () => (sold ? `Hola Élite Time, ¿cuándo vuelve a estar disponible el ${p.marca} ${p.modelo}?` : `Hola Élite Time, quiero comprar ${qty} × ${p.marca} ${p.modelo}${p.precio ? ' (' + fmt(p.precio) + (p.promo ? ', promo de Halloween con envío gratis' : '') + ')' : ''} ${impact ? ' y quiero agregar la caja de impacto (costo adicional)' : ''}. ¿Está disponible?`).replace(/\s{2,}/g, ' ');
   const upd = () => { $('#qv').textContent = qty; $('#now').href = Elite.wa(msg()) };
   upd();
   if (impactOk) $('#impact').onchange = e => { impact = e.target.checked; upd() };
