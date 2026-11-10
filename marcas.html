@@ -70,15 +70,17 @@ Elite.ready(d => {
   $('#bnav').innerHTML = B.map(([b, i]) => `<a class="chip" href="#${i.slug}">${b}</a>`).join('');
   $('#stack').innerHTML = B.map(([b, i], k) => {
     const L = P.filter(p => p.marca === b), pr = L.filter(p => p.precio).map(p => p.precio);
-    const pick = [...L.filter(p => p.destacado), ...L].filter((v, j, a) => a.indexOf(v) === j).slice(0, 3);
-    const vis = b === 'Curren' ? `<img class="curren-box" src="img/marca/caja-curren.webp" alt="Caja original Curren">`
+    /* los juegos de pareja traen dos relojes en la foto y en el abanico se ven amontonados */
+    const pick = [...L.filter(p => p.destacado), ...L].filter((v, j, a) => a.indexOf(v) === j && !/pareja/i.test(v.modelo)).slice(0, 3);
+    /* Curren muestra su caja solo mientras no haya relojes en el catálogo */
+    const vis = b === 'Curren' && !L.length ? `<img class="curren-box" src="img/marca/caja-curren.webp" alt="Caja original Curren">`
       : `<div class="fan">${pick.map(p => `<a href="${Elite.url(p)}" data-cursor="Ver">${Elite.img(p.imagen, p.marca + ' ' + p.modelo, '240px', 'loading="lazy"')}</a>`).join('')}</div>`;
     return `<article class="bpanel" id="${i.slug}">
       <div class="txt">
         <span class="idx">0${k + 1} / 0${B.length} · ${esc(i.since)}</span>
         <div class="lg">${i.logo ? `<img src="${i.logo.replace('-blanco', '')}" alt="${b}">` : `<span class="wd">${i.word}</span>`}</div>
         <h2 data-split>${esc(i.line)}</h2>
-        <div class="lines">${i.lines.map(l => `<a href="coleccion.html#${b === 'Poedagar' ? i.slug : L.length ? l.toLowerCase().replace(/\s+/g, '-') : ''}">${esc(l)}</a>`).join('')}</div>
+        <div class="lines">${i.lines.map(l => /^Pídelo/.test(l) ? `<a href="${Elite.wa('Hola Élite Time, quiero información sobre relojes ' + b + '.')}" target="_blank" rel="noopener">${esc(l)}</a>` : `<a href="coleccion.html#${b === 'Poedagar' ? i.slug : L.length ? l.toLowerCase().replace(/\s+/g, '-') : ''}">${esc(l)}</a>`).join('')}</div>
         <div class="meta">
           <div><b>${L.length || '—'}</b><span>${L.length ? 'referencias' : 'por pedido'}</span></div>
           ${pr.length ? `<div><b class="mono" style="font-size:1.4rem;padding-top:.5rem">${fmt(Math.min(...pr))}</b><span>desde</span></div>` : ''}
