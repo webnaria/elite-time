@@ -175,6 +175,26 @@
 .why svg{width:30px;height:30px;color:var(--gold)}
 .why b{font-family:var(--f-display);font-weight:600;font-size:1.25rem;line-height:1.2}
 .why span{color:var(--mute);font-size:.92rem}
+/* lo nuevo: aviso en la portada y la franja de recién llegados */
+.nuevo-pill{display:flex;width:fit-content;max-width:100%;align-items:center;gap:12px;margin-bottom:22px;padding:5px 16px 5px 5px;border-radius:999px;border:1px solid var(--gold-2);background:rgba(202,174,118,.1);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);text-decoration:none;font-size:.92rem;line-height:1.3;transition:border-color .4s,background .4s}
+.nuevo-pill:hover{border-color:var(--gold);background:rgba(202,174,118,.18)}
+.nuevo-pill .fotos{display:flex;flex:none}
+.nuevo-pill .fotos img{width:34px;height:34px;border-radius:50%;object-fit:contain;background:#fff;padding:3px;border:2px solid var(--ink)}
+.nuevo-pill .fotos img + img{margin-left:-12px}
+.nuevo-pill b{position:relative;display:inline-block;margin-right:8px;padding:.3em .65em;border-radius:999px;background:var(--gold);color:#0a0a0a;font-family:var(--f-mono);font-size:.68rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase}
+.nuevo-pill b::after{content:"";position:absolute;inset:-3px;border-radius:inherit;border:1px solid var(--gold);opacity:0;animation:npulso 2.2s 1.2s ease-out 3}
+@keyframes npulso{from{opacity:.9;transform:scale(1)}to{opacity:0;transform:scale(1.4)}}
+.nuevo-pill .arr{width:16px;height:16px;flex:none;color:var(--gold);transition:transform .4s var(--ease)}
+.nuevo-pill:hover .arr{transform:translateX(4px)}
+@media (max-width:480px){.nuevo-pill{gap:9px;font-size:.84rem}.nuevo-pill .fotos img:nth-child(3){display:none}}
+@media (prefers-reduced-motion:reduce){.nuevo-pill b::after{animation:none}}
+.nuevo{scroll-margin-top:20px}
+.nuevo-mas{display:flex;justify-content:center;margin-top:clamp(28px,4vw,48px)}
+@media (max-width:560px){
+  .nuevo-grid{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:44vw;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin-left:calc(-1 * var(--gut));margin-right:calc(-1 * var(--gut-r));padding-left:var(--gut);padding-right:var(--gut-r);scroll-padding-left:var(--gut)}
+  .nuevo-grid::-webkit-scrollbar{display:none}
+  .nuevo-grid .pcard{scroll-snap-align:start}
+}
 </style>
 </head>
 <body>
@@ -184,6 +204,7 @@
     <div class="giant" aria-hidden="true">TIME</div>
     <div class="wrap hero-grid">
       <div>
+        <a class="nuevo-pill" id="nuevoPill" href="#nuevo" hidden data-reveal></a>
         <span class="eyebrow" data-reveal>Relojería 100% original · Barranquilla</span>
         <h1 data-split style="margin-top:22px">El tiempo define <em>tu estilo.</em></h1>
         <p class="lead" id="heroSub" data-reveal=".2">Relojes para quienes marcan la diferencia. Invicta, Technomarine, Curren y Poedagar originales, con garantía de 1 año y envío a toda Colombia.</p>
@@ -206,6 +227,14 @@
       </div>
     </div>
     <div class="scroll-cue" aria-hidden="true"><i></i>SCROLL</div>
+  </section>
+
+  <section class="sec light nuevo" id="nuevo" hidden>
+    <div class="wrap">
+      <div class="sec-head"><div><span class="eyebrow">Recién llegados</span><h2 class="h-lg" data-split>Lo <em class="gold">nuevo.</em></h2></div><p class="lead" id="nuevoLead" data-reveal></p></div>
+      <div class="grid nuevo-grid" id="nuevoGrid" data-stagger></div>
+      <div class="nuevo-mas" data-reveal><a class="btn" id="nuevoBtn" href="coleccion.html#nuevo">Ver todo lo nuevo</a></div>
+    </div>
   </section>
 
   <section class="hw-band" id="hwBand" hidden></section>
@@ -338,6 +367,17 @@ Elite.ready(d => {
   $('#perfBand').hidden = !d.settings.show.perfumes;
   const mq = ['Invicta', 'Technomarine', 'Curren', 'Poedagar', 'Garantía de 1 año', 'Envíos a toda Colombia', 'Pago contra entrega'];
   $('#mq1').innerHTML = $('#mq2').innerHTML = (mq.map(t => `<span>${t}</span>`).join('')).repeat(2);
+
+  /* lo nuevo: lo que se sube al panel sale aquí y en el aviso del inicio durante 3 semanas */
+  const nv = Elite.novedad();
+  if (nv) {
+    const N = nv.N;
+    $('#nuevoPill').innerHTML = `<span class="fotos">${N.slice(0, 3).map(p => `<img src="${esc(p.imagen)}" alt="" width="34" height="34" decoding="async">`).join('')}</span><span><b>Nuevo</b>${esc(nv.texto)}</span>${Elite.ICON.arrow}`;
+    $('#nuevoLead').textContent = `${N.length === 1 ? 'Una referencia que acaba' : N.length + ' referencias que acaban'} de llegar a la tienda. Originales y con garantía de 1 año, como todo el catálogo.`;
+    $('#nuevoGrid').innerHTML = N.slice(0, 8).map(Elite.card).join('');
+    if (N.length > 8) $('#nuevoBtn').textContent = `Ver los ${N.length} nuevos`;
+    $('#nuevoPill').hidden = $('#nuevo').hidden = false;
+  }
 
   /* destacados */
   let F = P.filter(p => p.destacado && p.disponible !== false); if (F.length < 4) F = F.concat(P.filter(p => !F.includes(p)).slice(0, 6 - F.length));

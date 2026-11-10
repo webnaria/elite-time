@@ -20,6 +20,8 @@
 @media (max-width:520px){.cats{grid-template-columns:repeat(2,1fr)}}
 .cat{position:relative;border:1px solid var(--line);border-radius:var(--r);background:var(--ink-2);padding:16px;text-align:left;cursor:pointer;display:grid;gap:4px;overflow:hidden;transition:border-color .4s,transform .5s var(--ease)}
 .cat:hover{border-color:var(--gold-2);transform:translateY(-3px)}
+.cat[data-cat="nuevo"]{border-color:var(--gold-2)}
+.cat[data-cat="nuevo"] small{color:var(--gold)}
 .cat small{font-family:var(--f-mono);font-size:.62rem;letter-spacing:.16em;color:var(--dim);text-transform:uppercase}
 .cat b{font-family:var(--f-display);font-weight:500;font-size:1.3rem}
 .cat span{font-size:.8rem;color:var(--mute)}
@@ -90,6 +92,7 @@ Elite.ready(d => {
   const imgOf = f => (P.find(f) || {}).imagen || 'img/marca/logo.webp';
   const CATS = [
     ['todas', 'Todo', 'Catálogo', () => true],
+    ...(P.some(Elite.esNuevo) ? [['nuevo', 'Lo nuevo', 'Recién llegados', Elite.esNuevo]] : []),
     ['hombre', 'Hombre', 'Para él', p => p.genero === 'Hombre' || p.genero === 'Unisex'],
     ['mujer', 'Mujer', 'Para ella', p => p.genero === 'Mujer' || p.genero === 'Unisex'],
     ...Elite.brands().filter(b => b !== 'Curren' || P.some(p => p.marca === 'Curren')).map(b => [BRANDS[b]?.slug || b.toLowerCase(), b, 'Marca', p => p.marca === b])
@@ -104,7 +107,7 @@ Elite.ready(d => {
   }
   function list() {
     const q = S.q.trim().toLowerCase();
-    const by = {asc: (a, b) => (a.precio || 9e9) - (b.precio || 9e9), desc: (a, b) => (b.precio || 0) - (a.precio || 0), az: (a, b) => a.modelo.localeCompare(b.modelo), dest: (a, b) => (b.destacado - a.destacado) || ((b.disponible !== false) - (a.disponible !== false))}[S.sort];
+    const by = {asc: (a, b) => (a.precio || 9e9) - (b.precio || 9e9), desc: (a, b) => (b.precio || 0) - (a.precio || 0), az: (a, b) => a.modelo.localeCompare(b.modelo), dest: S.cat === 'nuevo' ? (a, b) => Elite.alta(b) - Elite.alta(a) : (a, b) => (b.destacado - a.destacado) || ((b.disponible !== false) - (a.disponible !== false))}[S.sort];
     return P.filter(catFn()).filter(p => (!S.line || lineOf(p) === S.line) && (!q || (p.marca + ' ' + p.modelo).toLowerCase().includes(q)) && (!p.precio || p.precio <= S.max)).sort(by);
   }
   function render(anim = true) {
@@ -121,7 +124,7 @@ Elite.ready(d => {
   function animateNum(el, to) { const from = +el.textContent || 0; if (Elite.reduce || from === to) { el.textContent = to; return } const t0 = performance.now(); (function f(t) { const k = Math.min(1, (t - t0) / 600); el.textContent = Math.round(from + (to - from) * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(f) })(t0) }
   /* leer filtro de la URL: #invicta, #mujer, #racing */
   const h = decodeURIComponent(location.hash.slice(1)).toLowerCase();
-  if (h) { const c = CATS.find(c => c[0] === h); if (c) S.cat = h; else { const l = [...new Set(P.map(lineOf))].find(l => l.toLowerCase().replace(/\s+/g, '-') === h); if (l) S.line = l; else S.q = h } $('#q').value = S.q }
+  if (h) { const c = CATS.find(c => c[0] === h); if (c) S.cat = h; else { const l = [...new Set(P.map(lineOf))].find(l => l.toLowerCase().replace(/\s+/g, '-') === h); if (l) S.line = l; else if (h !== 'nuevo') S.q = h } $('#q').value = S.q }
   renderLines(); render(false);
   $('#cats').onclick = e => { const b = e.target.closest('[data-cat]'); if (!b) return; S.cat = b.dataset.cat; S.line = ''; S.limit = 16; renderLines(); render(); };
   $('#lines').onclick = e => { const b = e.target.closest('[data-line]'); if (!b) return; S.line = b.dataset.line; S.limit = 16; renderLines(); render() };
