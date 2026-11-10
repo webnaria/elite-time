@@ -87,13 +87,12 @@ const NUEVO_DIAS = 21, NUEVO_DESDE = Date.UTC(2026, 10, 1);
 E.alta = p => { const t = parseInt(String(p.id || '').slice(1), 36); return t > NUEVO_DESDE && t < Date.now() + 864e5 ? t : 0 };
 E.esNuevo = p => p.disponible !== false && Date.now() - E.alta(p) < NUEVO_DIAS * 864e5;
 E.nuevos = () => E.data.productos.filter(E.esNuevo).sort((a, b) => E.alta(b) - E.alta(a));
-/* el titular del aviso: si casi todo lo nuevo es de una marca, se nombra la marca */
+/* el titular del aviso, sin cantidades: si casi todo lo nuevo es de una marca, se nombra la marca */
 E.novedad = () => {
   const N = E.nuevos(); if (!N.length) return null;
   const c = {}; N.forEach(p => c[p.marca] = (c[p.marca] || 0) + 1);
   const [m, n] = Object.entries(c).sort((a, b) => b[1] - a[1])[0];
-  const llego = (k, s) => k === 1 ? `Llegó un reloj ${s}` : `Llegaron ${k} relojes ${s}`;
-  return { N, texto: n / N.length >= .75 ? llego(n, m) : llego(N.length, N.length === 1 ? 'nuevo' : 'nuevos') };
+  return { N, texto: n / N.length < .75 ? 'Ya llegó lo nuevo' : n === 1 ? `Ya llegó un ${m} nuevo` : `Ya llegaron los nuevos ${m}` };
 };
 /* cada foto en varios tamaños: el navegador descarga solo el que necesita la pantalla */
 const VAR = { relojes: [[400, 700], 1100], clientes: [[500], 1000], modelo: [[600], 825], tula: [[700], 1050] };
@@ -171,7 +170,7 @@ function chrome() {
   const here = (location.pathname.split('/').pop() || 'index').toLowerCase().replace(/\.html$/, '') + '.html';
   const cur = h => here === h || (h === 'coleccion.html' && here === 'reloj.html') ? ' aria-current="page"' : '';
   const nv = E.novedad();
-  const ann = [...(nv ? [`Nuevo · ${nv.texto}`] : []), ...(HALLOWEEN ? ['🎃 Promoción de Halloween · solo hoy', 'Línea Pro Diver: antes $580.000, hoy $515.000', 'Envío gratis en la promoción'] : []), 'Relojería 100% original', 'Garantía de 1 año en maquinaria y batería', 'Envíos a toda Colombia', 'Pago contra entrega en Barranquilla y Soledad', `${ICON.wa} Pedidos por WhatsApp · ${E.phone()}`];
+  const ann = [...(nv ? [`Nuevo · ${nv.texto}`, 'Míralos antes que nadie'] : []), ...(HALLOWEEN ? ['🎃 Promoción de Halloween · solo hoy', 'Línea Pro Diver: antes $580.000, hoy $515.000', 'Envío gratis en la promoción'] : []), 'Relojería 100% original', 'Garantía de 1 año en maquinaria y batería', 'Envíos a toda Colombia', 'Pago contra entrega en Barranquilla y Soledad', `${ICON.wa} Pedidos por WhatsApp · ${E.phone()}`];
   document.body.insertAdjacentHTML('afterbegin', `
   <a href="#main" class="btn sm" style="position:fixed;left:-999px;top:8px;z-index:999" onfocus="this.style.left='8px'" onblur="this.style.left='-999px'">Saltar al contenido</a>
   <div class="announce" aria-label="Anuncios"><div class="track">${(ann.map(a => `<span>${a}</span>`).join('')).repeat(2)}</div></div>

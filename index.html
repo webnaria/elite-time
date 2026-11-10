@@ -175,6 +175,19 @@
 .why svg{width:30px;height:30px;color:var(--gold)}
 .why b{font-family:var(--f-display);font-weight:600;font-size:1.25rem;line-height:1.2}
 .why span{color:var(--mute);font-size:.92rem}
+/* anuncio al entrar: la imagen de la colección nueva, una vez por visita */
+.anuncio{position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:20px;background:rgba(5,5,5,.8);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);opacity:0;transition:opacity .45s}
+.anuncio.on{opacity:1}
+.an-caja{position:relative;display:grid;gap:16px;justify-items:center;transform:translateY(26px) scale(.96);transition:transform .8s var(--ease)}
+.anuncio.on .an-caja{transform:none}
+.an-img{display:block;border-radius:18px;overflow:hidden;box-shadow:0 40px 90px -30px #000,0 0 0 1px rgba(202,174,118,.4)}
+.an-img img{display:block;width:min(88vw,calc((100svh - 150px) * .8),540px);height:auto;aspect-ratio:4/5}
+.an-x{position:absolute;top:-16px;right:-16px;z-index:2;width:44px;height:44px;border-radius:50%;border:1px solid var(--gold-2);background:#0a0a0a;color:var(--bone);display:grid;place-items:center;cursor:pointer;transition:background .3s,color .3s}
+.an-x:hover{background:var(--gold);color:#0a0a0a}
+.an-x svg{width:18px;height:18px}
+@media (max-width:620px){.an-x{top:10px;right:10px;background:rgba(10,10,10,.75)}}
+@media (prefers-reduced-motion:reduce){.anuncio,.an-caja{transition:none}}
+
 /* lo nuevo: aviso en la portada y la franja de recién llegados */
 .nuevo-pill{display:flex;width:fit-content;max-width:100%;align-items:center;gap:12px;margin-bottom:22px;padding:5px 16px 5px 5px;border-radius:999px;border:1px solid var(--gold-2);background:rgba(202,174,118,.1);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);text-decoration:none;font-size:.92rem;line-height:1.3;transition:border-color .4s,background .4s}
 .nuevo-pill:hover{border-color:var(--gold);background:rgba(202,174,118,.18)}
@@ -238,6 +251,14 @@
   </section>
 
   <section class="hw-band" id="hwBand" hidden></section>
+
+  <div class="anuncio" id="anuncio" role="dialog" aria-modal="true" aria-label="Nueva colección Curren" hidden>
+    <div class="an-caja">
+      <button class="an-x" type="button" data-cerrar aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <a class="an-img" href="#nuevo" data-ver><img alt="Nueva colección Curren: tu próximo reloj acaba de llegar. Originales, garantía de 1 año y envíos a toda Colombia." width="1080" height="1350" decoding="async"></a>
+      <a class="btn" href="#nuevo" data-ver>Ver lo nuevo <svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+    </div>
+  </div>
 
   <div class="marquee" aria-hidden="true"><div class="track" id="mq1"></div></div>
 
@@ -373,10 +394,10 @@ Elite.ready(d => {
   if (nv) {
     const N = nv.N;
     $('#nuevoPill').innerHTML = `<span class="fotos">${N.slice(0, 3).map(p => `<img src="${esc(p.imagen)}" alt="" width="34" height="34" decoding="async">`).join('')}</span><span><b>Nuevo</b>${esc(nv.texto)}</span>${Elite.ICON.arrow}`;
-    $('#nuevoLead').textContent = `${N.length === 1 ? 'Una referencia que acaba' : N.length + ' referencias que acaban'} de llegar a la tienda. Originales y con garantía de 1 año, como todo el catálogo.`;
+    $('#nuevoLead').textContent = 'Recién llegados a la tienda: originales, con garantía de 1 año y listos para enviar a toda Colombia. Míralos antes que nadie.';
     $('#nuevoGrid').innerHTML = N.slice(0, 8).map(Elite.card).join('');
-    if (N.length > 8) $('#nuevoBtn').textContent = `Ver los ${N.length} nuevos`;
     $('#nuevoPill').hidden = $('#nuevo').hidden = false;
+    if (Date.now() < ANUNCIO.hasta) Elite.introDone.then(() => setTimeout(anuncio, 1200));
   }
 
   /* destacados */
@@ -405,6 +426,27 @@ Elite.ready(d => {
   buildDial();
   if (Elite.HALLOWEEN) halloween(P);
 });
+
+/* ---- Anuncio al entrar: la imagen de la colección nueva, una vez por visita, después de la intro.
+   La imagen se cambia en img/anuncios/; «hasta» es cuando deja de salir (Curren deja de ser nuevo el 30 de noviembre). ---- */
+const ANUNCIO = { img: 'img/anuncios/curren-nuevos', clave: 'et-anuncio-curren', hasta: Date.UTC(2026, 10, 30, 5) };
+async function anuncio() {
+  try { if (sessionStorage.getItem(ANUNCIO.clave)) return; sessionStorage.setItem(ANUNCIO.clave, '1') } catch (_) { }
+  const {$, $$} = Elite, box = $('#anuncio'), img = $('img', box);
+  img.srcset = `${ANUNCIO.img}-720.webp 720w, ${ANUNCIO.img}.webp 1080w`; img.sizes = 'min(88vw, 540px)'; img.src = ANUNCIO.img + '.webp';
+  try { await img.decode() } catch (_) { return }
+  const antes = document.activeElement;
+  const cerrar = () => { box.classList.remove('on'); removeEventListener('keydown', esc); Elite.lenis?.start(); setTimeout(() => box.hidden = true, 450); antes?.focus?.({ preventScroll: true }) };
+  const esc = e => { if (e.key === 'Escape') cerrar() };
+  box.onclick = e => {
+    if (e.target.closest('[data-ver]')) { e.preventDefault(); e.stopPropagation(); cerrar(); const t = $('#nuevo'); Elite.lenis ? Elite.lenis.scrollTo(t, { offset: -20 }) : t.scrollIntoView({ behavior: Elite.reduce ? 'auto' : 'smooth' }); return }
+    if (e.target === box || e.target.closest('[data-cerrar]')) cerrar();
+  };
+  addEventListener('keydown', esc);
+  box.hidden = false; Elite.lenis?.stop();
+  requestAnimationFrame(() => requestAnimationFrame(() => box.classList.add('on')));
+  $('[data-cerrar]', box).focus({ preventScroll: true });
+}
 
 /* ---- Halloween: franja con la promoción de la línea Pro Diver y la cuenta regresiva hasta la medianoche ---- */
 function halloween(P) {
