@@ -17,6 +17,10 @@ const hoyBq = new Date(Date.now() - 5 * 3600e3);
 const HALLOWEEN = /[?&]halloween=1/.test(location.search) || (hoyBq.getUTCFullYear() === 2026 && hoyBq.getUTCMonth() === 9 && hoyBq.getUTCDate() === 31);
 const PROMO = { antes: 580000, hoy: 515000, fin: Date.UTC(hoyBq.getUTCFullYear(), hoyBq.getUTCMonth(), hoyBq.getUTCDate() + 1, 5) };
 if (HALLOWEEN) document.documentElement.classList.add('halloween');
+/* Navidad: del 23 de noviembre de 2026 al 6 de enero de 2027 (Reyes), hora de Barranquilla.
+   Con ?navidad=1 en la dirección se puede ver otro día para probar. */
+const NAVIDAD = /[?&]navidad=1/.test(location.search) || (hoyBq >= new Date(Date.UTC(2026, 10, 23)) && hoyBq < new Date(Date.UTC(2027, 0, 7)));
+if (NAVIDAD) document.documentElement.classList.add('navidad');
 
 const DEFAULT_SETTINGS = { wa: '573105300899', pin: '2026', sub: '', show: { perfumes: true, pedir: true, garantia: true, destacados: true } };
 const DEFAULT_CLIENTES = [
@@ -73,7 +77,7 @@ async function loadData() {
     if (/pro\s*diver/i.test(p.modelo || '') && Number(p.precio) === PROMO.antes) { p.antes = p.precio; p.precio = PROMO.hoy; p.promo = true }
   });
 }
-E.HALLOWEEN = HALLOWEEN; E.PROMO = PROMO;
+E.HALLOWEEN = HALLOWEEN; E.PROMO = PROMO; E.NAVIDAD = NAVIDAD;
 E.byId = id => E.data.productos.find(p => p.id === id);
 E.brands = () => { const s = new Set(Object.keys(BRANDS)); E.data.productos.forEach(p => s.add(p.marca)); return [...s] };
 E.specs = p => p.specs && p.specs.length ? p.specs : ['Movimiento de cuarzo', 'Acero inoxidable', 'Resistente al agua'];
@@ -166,11 +170,13 @@ E.toast = toast;
 function chrome() {
   /* Halloween: murciélagos que cruzan la pantalla (capas que mueve la tarjeta gráfica, sin tocar la página) */
   if (HALLOWEEN && !reduce) document.body.insertAdjacentHTML('beforeend', `<div class="murcielagos" aria-hidden="true">${(document.getElementById('hwBand') ? [0, 1, 2, 3] : [1, 3]).map(i => `<i style="--i:${i}"><svg viewBox="0 0 64 30"><path d="M32 9L29.5 5 29 10C25 7 14 4 2 9c5 2 7 6 7 11 3-3 7-3 10 0 2-3 6-3 8 1l5 6 5-6c2-4 6-4 8-1 3-3 7-3 10 0 0-5 2-9 7-11-12-5-23-2-27 1L34.5 5Z"/></svg></i>`).join('')}</div>`);
+  /* Navidad: copos que caen por toda la pantalla (solo se mueven con transform) */
+  if (NAVIDAD && !reduce) document.body.insertAdjacentHTML('beforeend', `<div class="nieve" aria-hidden="true">${Array.from({ length: innerWidth < 700 ? 14 : 26 }, (_, i) => `<i style="--x:${(i * 41 + 7) % 100}%;--s:${4 + (i * 7) % 6}px;--d:${12 + (i * 5) % 10}s;--r:${-((i * 2.9) % 20).toFixed(1)}s;--o:${(.5 + ((i * 13) % 45) / 100).toFixed(2)}"><b></b></i>`).join('')}</div>`);
   /* Cloudflare Pages sirve las páginas sin «.html» (/coleccion): se compara siempre con el nombre del archivo */
   const here = (location.pathname.split('/').pop() || 'index').toLowerCase().replace(/\.html$/, '') + '.html';
   const cur = h => here === h || (h === 'coleccion.html' && here === 'reloj.html') ? ' aria-current="page"' : '';
   const nv = E.novedad();
-  const ann = [...(nv ? [`Nuevo · ${nv.texto}`, 'Míralos antes que nadie'] : []), ...(HALLOWEEN ? ['🎃 Promoción de Halloween · solo hoy', 'Línea Pro Diver: antes $580.000, hoy $515.000', 'Envío gratis en la promoción'] : []), 'Relojería 100% original', 'Garantía de 1 año en maquinaria y batería', 'Envíos a toda Colombia', 'Pago contra entrega en Barranquilla y Soledad', `${ICON.wa} Pedidos por WhatsApp · ${E.phone()}`];
+  const ann = [...(NAVIDAD ? ['🎄 Feliz Navidad en Élite Time', 'El regalo perfecto: un reloj original con garantía de 1 año'] : []), ...(nv ? [`Nuevo · ${nv.texto}`, 'Míralos antes que nadie'] : []), ...(HALLOWEEN ? ['🎃 Promoción de Halloween · solo hoy', 'Línea Pro Diver: antes $580.000, hoy $515.000', 'Envío gratis en la promoción'] : []), 'Relojería 100% original', 'Garantía de 1 año en maquinaria y batería', 'Envíos a toda Colombia', 'Pago contra entrega en Barranquilla y Soledad', `${ICON.wa} Pedidos por WhatsApp · ${E.phone()}`];
   document.body.insertAdjacentHTML('afterbegin', `
   <a href="#main" class="btn sm" style="position:fixed;left:-999px;top:8px;z-index:999" onfocus="this.style.left='8px'" onblur="this.style.left='-999px'">Saltar al contenido</a>
   <div class="announce" aria-label="Anuncios"><div class="track">${(ann.map(a => `<span>${a}</span>`).join('')).repeat(2)}</div></div>
@@ -419,12 +425,55 @@ function halloweenSitio() {
   }, { passive: true });
 }
 
+/* ================= Navidad en todas las páginas =================
+   Luces de colores colgando del menú, dos esferas que se columpian, pinos nevados antes del pie
+   de página y destellos dorados donde se toca. Las luces titilan a saltos (steps) para no
+   redibujar en cada cuadro. */
+const LUCES = ['#ff4b4b', '#ffd27a', '#3fd68a', '#fff1cf'];
+const ESFERA = (id, a, b) => `<svg viewBox="0 0 40 50"><defs><radialGradient id="${id}" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fff6df"/><stop offset=".28" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></radialGradient></defs><rect x="15" y="0" width="10" height="7" rx="1.5" fill="#b59a63"/><circle cx="20" cy="29" r="18" fill="url(#${id})"/><path d="M4 26q16 7 32 0" stroke="rgba(255,240,200,.65)" stroke-width="1.6" fill="none"/><path d="M5 33q15 6 30 0" stroke="rgba(255,240,200,.4)" stroke-width="1" fill="none" stroke-dasharray="2 3"/><ellipse cx="13" cy="20" rx="4" ry="6" fill="rgba(255,255,255,.55)" transform="rotate(30 13 20)"/></svg>`;
+function pinoSVG(cx, by, h, w) {
+  let s = `<rect x="${cx - w * .05}" y="${by - h * .14}" width="${w * .1}" height="${h * .14}" fill="#1b130b"/>`;
+  [0, 1, 2].forEach(k => {
+    const top = by - h + k * h * .26, base = top + h * .44, hw = w * (.22 + k * .14);
+    s += `<path d="M${cx} ${top}L${cx + hw} ${base}H${cx - hw}Z" fill="#0c1d15"/>`;
+    s += `<path d="M${cx} ${top}L${cx + hw * .36} ${top + h * .16}q-${hw * .18} ${h * .04}-${hw * .36} 0t-${hw * .36} 0Z" fill="#f4f1ea"/>`;
+  });
+  return s;
+}
+const PINOS = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 140">
+  ${[[40, 132, 92, 70], [104, 134, 62, 48], [196, 132, 110, 84], [282, 134, 70, 54], [362, 132, 96, 74], [440, 134, 58, 44]].map(a => pinoSVG(...a)).join('')}
+  <path d="M0 126Q60 116 120 124T240 122T360 126T480 124V140H0Z" fill="#efece6"/></svg>`;
+function navidadSitio() {
+  const head = $('#head');
+  if (head) {
+    /* las luces: una guirnalda que se repite cada 240 px, con 4 bombillos por tramo */
+    const seg = 240, n = Math.ceil(Math.max(innerWidth, screen.width || 0) / seg) + 1;
+    let b = '';
+    for (let s = 0; s < n; s++) for (let k = 0; k < 4; k++) {
+      const t = (k + .5) / 4, i = s * 4 + k;
+      b += `<i style="left:${Math.round(s * seg + t * seg)}px;top:${(3 + 56 * t * (1 - t)).toFixed(1)}px;--c:${LUCES[i % 4]};animation-delay:${-((i * 1.37) % 3.6).toFixed(2)}s"></i>`;
+    }
+    head.insertAdjacentHTML('beforeend', `<div class="nv-luces" aria-hidden="true">${b}</div><div class="nv-colgantes" aria-hidden="true"><i class="a"><b></b>${ESFERA('nvEr', '#e0353d', '#7d0f17')}</i><i class="b"><b></b>${ESFERA('nvEo', '#e6c98a', '#8c6d33')}</i></div>`);
+  }
+  /* pinos nevados antes del pie de página, con estrellas que titilan */
+  $('.site-foot')?.insertAdjacentHTML('beforebegin', `<div class="nv-pinos" aria-hidden="true" style="--pinos:url('data:image/svg+xml,${encodeURIComponent(PINOS)}')">${[[7, 18], [22, 40], [36, 12], [51, 30], [66, 16], [80, 44], [93, 22]].map(([x, y], i) => `<span class="nv-estrella" style="left:${x}%;top:${y}px;--r:${-i * 1.3}s">✦</span>`).join('')}</div>`);
+  /* destellos dorados donde se toca o se hace clic */
+  if (reduce) return;
+  document.addEventListener('click', e => {
+    if (e.target.closest('input,textarea,select') || !e.clientX) return;
+    const c = document.createElement('div');
+    c.className = 'nv-chispas'; c.style.left = e.clientX + 'px'; c.style.top = e.clientY + 'px';
+    c.innerHTML = Array.from({ length: 8 }, (_, i) => `<i style="--a:${i * 45 + Math.round(Math.random() * 20)}deg;--d:${28 + Math.round(Math.random() * 26)}px"></i>`).join('');
+    document.body.appendChild(c); setTimeout(() => c.remove(), 900);
+  }, { passive: true });
+}
+
 /* ================= arranque ================= */
 async function boot() {
   if (window.gsap && window.ScrollTrigger) gsap.registerPlugin(ScrollTrigger);
   const introP = E.introDone = intro();
   await loadData();
-  chrome(); if (HALLOWEEN) halloweenSitio(); wireWa(); bindGlobal(); renderCart(); pointerFx(); transitions(); smooth();
+  chrome(); if (HALLOWEEN) halloweenSitio(); if (NAVIDAD) navidadSitio(); wireWa(); bindGlobal(); renderCart(); pointerFx(); transitions(); smooth();
   isReady = true; readyFns.forEach(fn => fn(E.data)); readyFns = [];
   wireWa();
   await introP;

@@ -415,3 +415,65 @@ section{position:relative}
 .hw-rayo{position:absolute;inset:0;background:rgba(225,232,255,.85);opacity:0;animation:rayo 11s linear infinite}
 @keyframes rayo{0%,84%{opacity:0}85%{opacity:.42}86%{opacity:0}87.5%{opacity:.3}88.5%,100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){.hw-rayo,.hw-bruja,.hw-chispas{display:none}}
+
+/* ---------- Navidad (23 de noviembre al 6 de enero: elite.js pone la clase .navidad en <html>) ---------- */
+.navidad{--nv-rojo:#c4262e;--nv-verde:#1f6b47}
+.navidad .announce{background:linear-gradient(90deg,#7d0f17,#b3202a 50%,#7d0f17);color:#f7e7c1}
+.navidad .hero .glow{background:radial-gradient(closest-side,rgba(196,38,46,.24),transparent 70%)}
+/* nieve: cada copo cae (i) y se mece de lado (b) */
+.nieve{position:fixed;inset:0;z-index:55;pointer-events:none;overflow:hidden}
+.nieve i{position:absolute;left:var(--x);top:-14px;animation:nvCae var(--d) linear var(--r) infinite}
+.nieve b{display:block;width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle,#fff 0 38%,rgba(255,255,255,0) 72%);opacity:var(--o);animation:nvVaiven 3.4s ease-in-out infinite alternate}
+@keyframes nvCae{to{transform:translateY(calc(100vh + 30px))}}
+@keyframes nvVaiven{from{transform:translateX(-14px)}to{transform:translateX(14px)}}
+/* luces de colores colgando del menú */
+.nv-luces{position:absolute;left:0;right:0;top:100%;height:30px;pointer-events:none;overflow:hidden;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 24'%3E%3Cpath d='M0 3Q120 31 240 3' fill='none' stroke='%23caae76' stroke-opacity='.6' stroke-width='1.4'/%3E%3C/svg%3E") repeat-x 0 0/240px 24px}
+.nv-luces i{position:absolute;width:7px;height:10px;margin-left:-3.5px;border-radius:50% 50% 50% 50%/42% 42% 58% 58%;background:var(--c);box-shadow:0 0 7px 2px var(--c);box-shadow:0 0 6px 1px var(--c),0 0 14px 3px color-mix(in srgb,var(--c) 45%,transparent);animation:nvLuz 3.6s steps(1) infinite}
+.nv-luces i::before{content:"";position:absolute;left:1.5px;top:-3px;width:4px;height:4px;border-radius:1px;background:#6f5b36}
+@keyframes nvLuz{0%,100%{opacity:1}28%{opacity:.3}34%{opacity:1}61%{opacity:.5}69%{opacity:1}}
+/* esferas que cuelgan del menú y se columpian */
+.nv-colgantes{position:absolute;left:0;right:0;top:100%;height:0;pointer-events:none}
+.nv-colgantes i{position:absolute;top:0;width:30px;transform-origin:50% 0;animation:nvColumpio 3.6s ease-in-out infinite alternate}
+.nv-colgantes i.a{right:clamp(120px,17vw,270px)}
+.nv-colgantes i.b{left:50%;width:24px;animation-duration:4.4s;animation-delay:-1.6s}
+.nv-colgantes b{display:block;width:1px;height:46px;margin:0 auto;background:rgba(202,174,118,.6)}
+.nv-colgantes i.b b{height:74px}
+.nv-colgantes svg{display:block;width:100%;margin-top:-2px;filter:drop-shadow(0 8px 10px rgba(0,0,0,.45))}
+@keyframes nvColumpio{from{transform:rotate(-8deg)}to{transform:rotate(8deg)}}
+@media (max-width:900px){.nv-colgantes i.b{display:none}.nv-colgantes i.a{right:26px;width:26px}}
+/* pinos nevados antes del pie de página */
+.nv-pinos{position:relative;height:140px;overflow:hidden;background:var(--pinos) repeat-x bottom/480px 140px,radial-gradient(45% 120% at 50% 100%,rgba(202,174,118,.2),transparent 70%)}
+.navidad .nv-pinos+.site-foot{margin-top:0;border-top:0}
+.nv-estrella{position:absolute;font-size:11px;line-height:1;color:#ffe7a8;text-shadow:0 0 8px rgba(255,210,120,.9);animation:nvLuz 4.2s steps(1) infinite;animation-delay:var(--r,0s)}
+/* destellos donde se toca */
+.nv-chispas{position:fixed;z-index:300;width:0;height:0;pointer-events:none}
+.nv-chispas i{position:absolute;left:-3px;top:-3px;width:6px;height:6px;background:#ffd98a;box-shadow:0 0 8px 1px #ffd98a;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);transform:rotate(var(--a)) translateX(0);animation:nvChispa .8s cubic-bezier(.2,.7,.3,1) forwards}
+.nv-chispas i:nth-child(2n){background:#fff;box-shadow:0 0 8px 1px #fff}
+@keyframes nvChispa{to{transform:rotate(var(--a)) translateX(var(--d)) scale(.3);opacity:0}}
+/* inicio: gorro de Papá Noel en el reloj y luces desenfocadas */
+.nv-gorro{position:absolute;left:47%;top:-13%;width:36%;z-index:3;transform:rotate(17deg);pointer-events:none;filter:drop-shadow(0 18px 22px rgba(0,0,0,.55))}
+.nv-gorro svg{display:block;width:100%}
+.nv-hero{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.nv-hero i{position:absolute;left:var(--x);top:var(--y);width:var(--s);aspect-ratio:1;border-radius:50%;background:radial-gradient(closest-side,var(--c),transparent);opacity:.5;animation:nvLuz 5s steps(1) infinite;animation-delay:var(--r,0s)}
+/* franja de Navidad en el inicio */
+.nv-band{position:relative;overflow:hidden;isolation:isolate;padding-block:clamp(60px,8vw,120px);background:radial-gradient(70% 90% at 12% 15%,rgba(196,38,46,.26),transparent 70%),radial-gradient(60% 80% at 92% 90%,rgba(31,107,71,.3),transparent 70%),#0a0a0a;border-block:1px solid rgba(202,174,118,.35)}
+.nv-deco{position:absolute;inset:0;z-index:-1;pointer-events:none}
+.nv-rama{position:absolute;top:-6px;width:clamp(170px,24vw,320px)}
+.nv-rama.izq{left:-10px}
+.nv-rama.der{right:-10px;transform:scaleX(-1)}
+.nv-rama svg{display:block;width:100%}
+.nv-in{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:clamp(30px,5vw,64px);align-items:center}
+/* color sólido: el texto se parte en palabras animadas y el degradado recortado no se pinta */
+.nv-txt h2 em{font-style:italic;color:var(--gold-3)}
+.nv-txt .lead b{color:var(--bone)}
+.nv-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+.nv-cuenta{display:inline-flex;align-items:baseline;gap:10px;margin-top:22px;font-family:var(--f-mono);font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.nv-cuenta b{font-family:var(--f-display);font-size:2.4rem;letter-spacing:0;color:var(--gold);line-height:1}
+.nv-regalos{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.nv-regalo{display:grid;gap:10px}
+.nv-para{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+.nv-caja{position:absolute;right:-14px;top:-34px;width:clamp(70px,8vw,104px);z-index:3;filter:drop-shadow(0 14px 16px rgba(0,0,0,.6));transform:rotate(8deg)}
+.nv-caja svg{display:block;width:100%}
+@media (max-width:900px){.nv-in{grid-template-columns:1fr}.nv-caja{right:-4px;top:-26px}}
+@media (max-width:560px){.nv-regalos{gap:10px}.nv-rama{width:150px;opacity:.85}}
+@media (prefers-reduced-motion:reduce){.nieve,.nv-chispas{display:none}.nv-luces i,.nv-estrella,.nv-hero i,.nv-colgantes i{animation:none}}

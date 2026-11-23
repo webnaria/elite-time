@@ -175,19 +175,6 @@
 .why svg{width:30px;height:30px;color:var(--gold)}
 .why b{font-family:var(--f-display);font-weight:600;font-size:1.25rem;line-height:1.2}
 .why span{color:var(--mute);font-size:.92rem}
-/* anuncio al entrar: la imagen de la colección nueva, una vez por visita */
-.anuncio{position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:20px;background:rgba(5,5,5,.8);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);opacity:0;transition:opacity .45s}
-.anuncio.on{opacity:1}
-.an-caja{position:relative;display:grid;gap:16px;justify-items:center;transform:translateY(26px) scale(.96);transition:transform .8s var(--ease)}
-.anuncio.on .an-caja{transform:none}
-.an-img{display:block;border-radius:18px;overflow:hidden;box-shadow:0 40px 90px -30px #000,0 0 0 1px rgba(202,174,118,.4)}
-.an-img img{display:block;width:min(88vw,calc((100svh - 150px) * .8),540px);height:auto;aspect-ratio:4/5}
-.an-x{position:absolute;top:-16px;right:-16px;z-index:2;width:44px;height:44px;border-radius:50%;border:1px solid var(--gold-2);background:#0a0a0a;color:var(--bone);display:grid;place-items:center;cursor:pointer;transition:background .3s,color .3s}
-.an-x:hover{background:var(--gold);color:#0a0a0a}
-.an-x svg{width:18px;height:18px}
-@media (max-width:620px){.an-x{top:10px;right:10px;background:rgba(10,10,10,.75)}}
-@media (prefers-reduced-motion:reduce){.anuncio,.an-caja{transition:none}}
-
 /* lo nuevo: aviso en la portada y la franja de recién llegados */
 .nuevo-pill{display:flex;width:fit-content;max-width:100%;align-items:center;gap:12px;margin-bottom:22px;padding:5px 16px 5px 5px;border-radius:999px;border:1px solid var(--gold-2);background:rgba(202,174,118,.1);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);text-decoration:none;font-size:.92rem;line-height:1.3;transition:border-color .4s,background .4s}
 .nuevo-pill:hover{border-color:var(--gold);background:rgba(202,174,118,.18)}
@@ -252,13 +239,7 @@
 
   <section class="hw-band" id="hwBand" hidden></section>
 
-  <div class="anuncio" id="anuncio" role="dialog" aria-modal="true" aria-label="Nueva colección Curren" hidden>
-    <div class="an-caja">
-      <button class="an-x" type="button" data-cerrar aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-      <a class="an-img" href="#nuevo" data-ver><img alt="Nueva colección Curren: tu próximo reloj acaba de llegar. Originales, garantía de 1 año y envíos a toda Colombia." width="1080" height="1350" decoding="async"></a>
-      <a class="btn" href="#nuevo" data-ver>Ver lo nuevo <svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-    </div>
-  </div>
+  <section class="nv-band" id="nvBand" hidden></section>
 
   <div class="marquee" aria-hidden="true"><div class="track" id="mq1"></div></div>
 
@@ -397,7 +378,6 @@ Elite.ready(d => {
     $('#nuevoLead').textContent = 'Recién llegados a la tienda: originales, con garantía de 1 año y listos para enviar a toda Colombia. Míralos antes que nadie.';
     $('#nuevoGrid').innerHTML = N.slice(0, 8).map(Elite.card).join('');
     $('#nuevoPill').hidden = $('#nuevo').hidden = false;
-    if (Date.now() < ANUNCIO.hasta) Elite.introDone.then(() => setTimeout(anuncio, 1200));
   }
 
   /* destacados */
@@ -425,27 +405,42 @@ Elite.ready(d => {
 
   buildDial();
   if (Elite.HALLOWEEN) halloween(P);
+  if (Elite.NAVIDAD) navidad(P);
 });
 
-/* ---- Anuncio al entrar: la imagen de la colección nueva, una vez por visita, después de la intro.
-   La imagen se cambia en img/anuncios/; «hasta» es cuando deja de salir (Curren deja de ser nuevo el 30 de noviembre). ---- */
-const ANUNCIO = { img: 'img/anuncios/curren-nuevos', clave: 'et-anuncio-curren', hasta: Date.UTC(2026, 10, 30, 5) };
-async function anuncio() {
-  try { if (sessionStorage.getItem(ANUNCIO.clave)) return; sessionStorage.setItem(ANUNCIO.clave, '1') } catch (_) { }
-  const {$, $$} = Elite, box = $('#anuncio'), img = $('img', box);
-  img.srcset = `${ANUNCIO.img}-720.webp 720w, ${ANUNCIO.img}.webp 1080w`; img.sizes = 'min(88vw, 540px)'; img.src = ANUNCIO.img + '.webp';
-  try { await img.decode() } catch (_) { return }
-  const antes = document.activeElement;
-  const cerrar = () => { box.classList.remove('on'); removeEventListener('keydown', esc); Elite.lenis?.start(); setTimeout(() => box.hidden = true, 450); antes?.focus?.({ preventScroll: true }) };
-  const esc = e => { if (e.key === 'Escape') cerrar() };
-  box.onclick = e => {
-    if (e.target.closest('[data-ver]')) { e.preventDefault(); e.stopPropagation(); cerrar(); const t = $('#nuevo'); Elite.lenis ? Elite.lenis.scrollTo(t, { offset: -20 }) : t.scrollIntoView({ behavior: Elite.reduce ? 'auto' : 'smooth' }); return }
-    if (e.target === box || e.target.closest('[data-cerrar]')) cerrar();
-  };
-  addEventListener('keydown', esc);
-  box.hidden = false; Elite.lenis?.stop();
-  requestAnimationFrame(() => requestAnimationFrame(() => box.classList.add('on')));
-  $('[data-cerrar]', box).focus({ preventScroll: true });
+/* ---- Navidad: gorro de Papá Noel en el reloj, luces desenfocadas en el inicio y franja de regalos para él y para ella ---- */
+function navidad(P) {
+  const {$} = Elite, band = $('#nvBand');
+  /* el gorro va sobre el reloj grande del inicio */
+  $('#stage .dialbox')?.insertAdjacentHTML('beforeend', `<div class="nv-gorro" aria-hidden="true"><svg viewBox="0 0 120 104"><defs><linearGradient id="nvGr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e2343c"/><stop offset="1" stop-color="#7d0f17"/></linearGradient><radialGradient id="nvPe" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#e4ded3"/></radialGradient></defs><path d="M14 78C20 46 40 18 66 10c16-5 30 2 36 16 3 8 2 16-2 22-4-10-10-16-18-16-10 0-16 10-14 30Z" fill="url(#nvGr)"/><path d="M60 22c10-4 22-2 30 8" stroke="rgba(255,255,255,.25)" stroke-width="3" fill="none" stroke-linecap="round"/><rect x="4" y="68" width="112" height="26" rx="13" fill="url(#nvPe)"/><path d="M14 76h92M18 86h84" stroke="rgba(160,150,135,.35)" stroke-width="2" stroke-dasharray="1 5" stroke-linecap="round"/><circle cx="100" cy="50" r="12" fill="url(#nvPe)"/></svg></div>`);
+  $('.hero').insertAdjacentHTML('beforeend', `<div class="nv-hero" aria-hidden="true">${[['8%', '18%', '160px', 'rgba(255,75,75,.5)'], ['32%', '70%', '120px', 'rgba(255,210,122,.45)'], ['58%', '8%', '90px', 'rgba(63,214,138,.4)'], ['84%', '62%', '150px', 'rgba(255,75,75,.4)'], ['70%', '84%', '80px', 'rgba(255,241,207,.4)']].map(([x, y, s, c], i) => `<i style="--x:${x};--y:${y};--s:${s};--c:${c};--r:${-i * 1.1}s"></i>`).join('')}</div>`);
+  /* un regalo para él y otro para ella: el primer destacado de cada uno, o el primero disponible */
+  const libres = P.filter(p => p.disponible !== false && p.precio);
+  const elige = g => libres.find(p => p.genero === g && p.destacado) || libres.find(p => p.genero === g);
+  const regalos = [elige('Hombre'), elige('Mujer')].filter(Boolean);
+  /* cuenta regresiva hasta la Nochebuena (24 de diciembre en Barranquilla) */
+  const dias = Math.ceil((Date.UTC(2026, 11, 24, 5) - Date.now()) / 864e5);
+  const cuenta = dias > 1 ? `<div class="nv-cuenta" data-reveal=".25">Faltan <b>${dias}</b> días para Nochebuena</div>` : dias === 1 ? `<div class="nv-cuenta" data-reveal=".25">Mañana es Nochebuena</div>` : '';
+  const rama = `<svg viewBox="0 0 300 150"><g stroke-linecap="round" fill="none">${Array.from({ length: 26 }, (_, i) => { const t = i / 25, x = 8 + t * 270, y = 14 + t * 58 - t * t * 20; return `<path d="M${x.toFixed(1)} ${y.toFixed(1)}l${(-8 + t * 4).toFixed(1)} -16M${x.toFixed(1)} ${y.toFixed(1)}l${(-6 + t * 3).toFixed(1)} 17M${x.toFixed(1)} ${y.toFixed(1)}l-14 2" stroke="${i % 2 ? '#1f6b47' : '#2e8a5c'}" stroke-width="2.4"/>` }).join('')}<path d="M8 14C90 50 180 66 278 52" stroke="#3a2a17" stroke-width="3.5"/></g><path d="M120 46v30M214 58v44" stroke="rgba(202,174,118,.7)" stroke-width="1"/>${ESFERA_B(120, 88, 12, '#e0353d', '#7d0f17')}${ESFERA_B(214, 114, 14, '#e6c98a', '#8c6d33')}</svg>`;
+  band.innerHTML = `<div class="nv-deco" aria-hidden="true"><div class="nv-rama izq">${rama}</div><div class="nv-rama der">${rama}</div></div>
+  <div class="wrap nv-in">
+    <div class="nv-txt">
+      <span class="eyebrow" data-reveal>🎄 Navidad en Élite Time</span>
+      <h2 class="h-lg" data-split style="margin-top:16px">Esta Navidad, <em>regala tiempo.</em></h2>
+      <p class="lead" data-reveal=".1" style="margin-top:18px">Relojes originales con <b>garantía de 1 año</b>, listos para regalar. Envíos a toda Colombia y pago contra entrega en Barranquilla y Soledad.</p>
+      ${cuenta}
+      <div class="nv-cta" data-reveal=".2"><a class="btn" href="coleccion.html#hombre">Regalos para él</a><a class="btn ghost" href="coleccion.html#mujer">Regalos para ella</a></div>
+    </div>
+    <div class="nv-regalos" data-stagger>${regalos.map((p, i) => `<div class="nv-regalo"><span class="nv-para">${p.genero === 'Mujer' ? 'Para ella' : 'Para él'}</span>${Elite.card(p, i)}</div>`).join('')}
+      <div class="nv-caja" aria-hidden="true"><svg viewBox="0 0 100 100"><rect x="10" y="40" width="80" height="54" rx="4" fill="#caae76"/><rect x="6" y="28" width="88" height="18" rx="3" fill="#e9d6a8"/><rect x="44" y="28" width="12" height="66" fill="#c4262e"/><rect x="10" y="58" width="80" height="0" fill="none"/><path d="M50 28C40 8 20 10 26 22c3 6 14 6 24 6M50 28C60 8 80 10 74 22c-3 6-14 6-24 6" fill="none" stroke="#c4262e" stroke-width="6" stroke-linejoin="round"/><rect x="10" y="46" width="80" height="4" fill="rgba(0,0,0,.12)"/></svg></div>
+    </div>
+  </div>`;
+  band.hidden = false;
+}
+/* esfera para las ramas (dibujada dentro de otro SVG) */
+function ESFERA_B(cx, cy, r, a, b) {
+  const id = 'nvB' + cx;
+  return `<defs><radialGradient id="${id}" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fff6df"/><stop offset=".3" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></radialGradient></defs><rect x="${cx - 3}" y="${cy - r - 4}" width="6" height="5" fill="#b59a63"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#${id})"/>`;
 }
 
 /* ---- Halloween: franja con la promoción de la línea Pro Diver y la cuenta regresiva hasta la medianoche ---- */
