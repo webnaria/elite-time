@@ -440,7 +440,7 @@ section{position:relative}
 .nv-colgantes i.b b{height:74px}
 .nv-colgantes svg{display:block;width:100%;margin-top:-2px;filter:drop-shadow(0 8px 10px rgba(0,0,0,.45))}
 @keyframes nvColumpio{from{transform:rotate(-8deg)}to{transform:rotate(8deg)}}
-@media (max-width:900px){.nv-colgantes i.b{display:none}.nv-colgantes i.a{right:26px;width:26px}}
+@media (max-width:900px){.nv-colgantes i.b{display:none}.nv-colgantes i.a{right:auto;left:22%;width:26px}}
 /* pinos nevados antes del pie de página */
 .nv-pinos{position:relative;height:140px;overflow:hidden;background:var(--pinos) repeat-x bottom/480px 140px,radial-gradient(45% 120% at 50% 100%,rgba(202,174,118,.2),transparent 70%)}
 .navidad .nv-pinos+.site-foot{margin-top:0;border-top:0}
@@ -451,8 +451,7 @@ section{position:relative}
 .nv-chispas i:nth-child(2n){background:#fff;box-shadow:0 0 8px 1px #fff}
 @keyframes nvChispa{to{transform:rotate(var(--a)) translateX(var(--d)) scale(.3);opacity:0}}
 /* inicio: gorro de Papá Noel en el reloj y luces desenfocadas */
-.nv-gorro{position:absolute;left:47%;top:-13%;width:36%;z-index:3;transform:rotate(17deg);pointer-events:none;filter:drop-shadow(0 18px 22px rgba(0,0,0,.55))}
-.nv-gorro svg{display:block;width:100%}
+.nv-gorro{position:absolute;left:44%;top:-9%;width:58%;height:auto;z-index:3;transform:rotate(-4deg);pointer-events:none;filter:drop-shadow(0 16px 18px rgba(0,0,0,.5))}
 .nv-hero{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
 .nv-hero i{position:absolute;left:var(--x);top:var(--y);width:var(--s);aspect-ratio:1;border-radius:50%;background:radial-gradient(closest-side,var(--c),transparent);opacity:.5;animation:nvLuz 5s steps(1) infinite;animation-delay:var(--r,0s)}
 /* franja de Navidad en el inicio */
